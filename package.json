@@ -23,8 +23,17 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
+    "@fontsource/geist": "^5.2.8",
+    "@tailwindcss/vite": "^4.1.18",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "electron-updater": "^6.3.9",
-    "react-router-dom": "^7.11.0"
+    "lucide-react": "^0.562.0",
+    "radix-ui": "^1.4.3",
+    "react-router-dom": "^7.11.0",
+    "tailwind-merge": "^3.4.0",
+    "tailwindcss": "^4.1.18",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",

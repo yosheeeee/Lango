@@ -1,1 +1,4 @@
-export const routerPaths = {}
+export const routerPaths = {
+  projectSelect: '/',
+  editor: '/editor'
+}

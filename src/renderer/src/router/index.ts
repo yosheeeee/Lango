@@ -1,9 +1,15 @@
-import App from '@renderer/App'
 import { createHashRouter } from 'react-router-dom'
+import { routerPaths } from './routerPaths'
+import ProjectSelectPage from '@renderer/pages/ProjectSelect'
+import EditorPage from '@renderer/pages/Editor'
 
 export const router = createHashRouter([
   {
-    index: true,
-    Component: App
+    path: routerPaths.projectSelect,
+    Component: ProjectSelectPage
+  },
+  {
+    path: routerPaths.editor,
+    Component: EditorPage
   }
 ])

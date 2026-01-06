@@ -1,0 +1,15 @@
+@import 'tailwindcss';
+
+html {
+  @apply h-screen w-screen;
+}
+
+#root,
+body {
+  @apply h-full w-full;
+}
+
+body {
+  @apply bg-gray-900 text-gray-50;
+  font-family: 'Geist';
+}
