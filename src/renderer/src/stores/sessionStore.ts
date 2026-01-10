@@ -1,4 +1,4 @@
-import { Session } from 'src/models/session'
+import { Session } from 'src/domain/models/session'
 import { create } from 'zustand'
 import { createJSONStorage } from 'zustand/middleware'
 import { persist } from 'zustand/middleware'
