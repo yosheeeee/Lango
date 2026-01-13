@@ -91,7 +91,7 @@ class SessionService {
 
     const result = await dialog.showOpenDialog(
       focusedWindow || {
-        properties: ['openDirectory'],
+        properties: ['openFile', 'openDirectory'],
         title: 'Выберите папку проекта',
         buttonLabel: 'Выбрать'
       }

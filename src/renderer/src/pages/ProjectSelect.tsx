@@ -1,6 +1,7 @@
 import { Button } from '@renderer/components/button'
 import { Logo } from '@renderer/components/logo'
 import { ProjectSelectLayout } from '@renderer/layouts/ProjectSelectLayout'
+import { AddNewProjectModal } from '@renderer/modules/addNewProjectModal'
 import { FilePlus2 } from 'lucide-react'
 import { ReactNode } from 'react'
 
@@ -28,10 +29,12 @@ export default function ProjectSelectPage(): ReactNode {
             or
           </p>
         </div>
-        <Button size={'lg'} className="w-full">
-          <FilePlus2 />
-          Add new project
-        </Button>
+        <AddNewProjectModal>
+          <Button size={'lg'} className="w-full">
+            <FilePlus2 />
+            Add new project
+          </Button>
+        </AddNewProjectModal>
       </main>
     </ProjectSelectLayout>
   )

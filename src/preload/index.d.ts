@@ -1,11 +1,9 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
-import { SessionHandler } from '../controllers/types'
+import { ControllerHandler } from '../controllers/types'
 
 declare global {
   interface Window {
     electron: ElectronAPI
-    api: {
-      session: SessionHandler
-    }
+    api: ControllerHandler
   }
 }

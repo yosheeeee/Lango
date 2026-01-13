@@ -33,7 +33,7 @@ export const useSessionStore = create<SessionStore>()(
     }),
     {
       name: 'session-storage',
-      storage: createJSONStorage(() => sessionStore)
+      storage: createJSONStorage(() => localStorage)
     }
   )
 )
