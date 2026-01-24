@@ -1,6 +1,7 @@
 import { ipcRenderer } from 'electron'
 import { ControllerHandler } from './types'
 import { Session } from '../domain/models/session'
+import { Language } from '../domain/models/currentLanguage'
 
 // API для renderer процесса
 export const api: ControllerHandler = {
@@ -17,5 +18,9 @@ export const api: ControllerHandler = {
       ipcRenderer.invoke('session:removeCurrentSession'),
     openSelectFolderDialog: (): Promise<string | null> =>
       ipcRenderer.invoke('session:openSelectFolderDialog')
+  },
+  currentLanguage: {
+    getCurrentLanguage: () => ipcRenderer.invoke('getCurrentLanguage'),
+    setCurrentLanguage: (lang: Language) => ipcRenderer.invoke('setCurrentLanguage', lang)
   }
 }

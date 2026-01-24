@@ -1,1 +1,2 @@
 import './sessionController'
+import './currentLanguageController'

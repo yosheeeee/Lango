@@ -4,23 +4,40 @@ import { FC, PropsWithChildren, useState } from 'react'
 import { Dialog, DialogContent, DialogTitle } from '@renderer/components/dialog'
 import { Button } from '@renderer/components/button'
 import { Check, X } from 'lucide-react'
-import { Form, FormControl, FormField, FormItem, FormLabel, Input } from '@renderer/components/form'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  Input
+} from '@renderer/components/form'
 import { PathInput } from '@renderer/components/inputs/PathInput'
 import { ColorSelectInput } from '@renderer/components/inputs/ColorSelectInput'
+import { Session } from 'src/domain/models/session'
+import { zodResolver } from '@hookform/resolvers/zod'
+import z from 'zod'
 
-export const AddNewProjectModal: FC<PropsWithChildren & { onAdded?: VoidFunction }> = ({
-  children,
-  onAdded
-}) => {
+export const AddNewProjectModal: FC<
+  PropsWithChildren & { onAdded?: (session: Session) => void }
+> = ({ children, onAdded }) => {
   const [open, setOpen] = useState(false)
   const form = useForm({
     values: {
       path: '',
       name: '',
       color: ''
-    }
+    },
+    resolver: zodResolver(
+      z.object({
+        path: z.string().min(1, 'Select path'),
+        name: z.string().min(1, 'Enter project name'),
+        color: z.string().min(1, 'Select color')
+      })
+    )
   })
-  const { setValue, handleSubmit, reset } = form
+  const { setValue, handleSubmit, reset, setError } = form
 
   async function onClick(): Promise<void> {
     const path = await window.api.session.openSelectFolderDialog()
@@ -30,10 +47,17 @@ export const AddNewProjectModal: FC<PropsWithChildren & { onAdded?: VoidFunction
     }
   }
 
-  const onSaveProject = handleSubmit(async () => {
-    console.log(data)
-    window.api.session.addSession({})
-    // onAdded?.()
+  const onSaveProject = handleSubmit(async (data) => {
+    const newSession = await window.api.session.addSession(data)
+    if ('errors' in newSession) {
+      Object.entries(newSession.errors).map(([key, value]) => {
+        console.log(key, value)
+        setError(key, { message: value })
+      })
+      return
+    }
+    onAdded?.(newSession)
+    cancelAdd()
   })
 
   const cancelAdd: VoidFunction = () => {
@@ -46,7 +70,11 @@ export const AddNewProjectModal: FC<PropsWithChildren & { onAdded?: VoidFunction
       <Slot onClick={onClick}>{children}</Slot>
       <DialogContent>
         <DialogTitle>Add new project</DialogTitle>
-        <Form {...form} className="grid grid-cols-[repeat(2,300px)] gap-4" onSubmit={onSaveProject}>
+        <Form
+          {...form}
+          className="grid grid-cols-[repeat(2,300px)] gap-4 items-start"
+          onSubmit={onSaveProject}
+        >
           <FormField
             name="name"
             render={({ field }) => (
@@ -55,6 +83,7 @@ export const AddNewProjectModal: FC<PropsWithChildren & { onAdded?: VoidFunction
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -66,6 +95,7 @@ export const AddNewProjectModal: FC<PropsWithChildren & { onAdded?: VoidFunction
                 <FormControl>
                   <ColorSelectInput {...field} />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -77,6 +107,7 @@ export const AddNewProjectModal: FC<PropsWithChildren & { onAdded?: VoidFunction
                 <FormControl>
                   <PathInput {...field} />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />

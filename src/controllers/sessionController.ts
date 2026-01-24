@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron'
 import { sessionService } from '../services/sessionService'
-import { Session } from '../domain/models/session'
+import { GenericControllerHandler } from './types'
 
 // Получить все сессии
 ipcMain.handle('sessions:get', () => {
@@ -38,12 +38,6 @@ ipcMain.handle('session:openSelectFolderDialog', () => {
   return sessionService.openSelectFolderDialog()
 })
 
-export interface SessionHandler {
-  getSessions: () => Promise<Session[]>
-  addSession: (sessionData: Omit<Session, 'id'>) => Promise<Session>
-  removeSession: (id: number) => Promise<boolean>
-  getCurrentSession: () => Promise<Session | null>
-  setCurrentSession: (id: number) => Promise<Session | null>
-  removeCurrentSession: () => Promise<boolean>
-  openSelectFolderDialog: () => Promise<string | null>
-}
+type Service = typeof sessionService
+
+export type SessionHandler = GenericControllerHandler<Service>

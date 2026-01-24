@@ -1,6 +1,9 @@
 import store from '../domain/store'
 import { Session } from '../domain/models/session'
+import { ProjectService } from './projectService'
+import { SessionServiceErrors } from '../domain/models/errors'
 
+type NewSessionDto = Omit<Session, 'id'>
 class SessionService {
   /**
    * Получает список всех сохраненных сессий
@@ -12,8 +15,46 @@ class SessionService {
   /**
    * Добавляет новую сессию
    */
-  addSession(session: Omit<Session, 'id'>): Session {
+  addSession(
+    session: NewSessionDto
+  ): Session | { errors: Partial<Record<keyof NewSessionDto, string>> } {
+    const project = new ProjectService(session.path)
+    const checkResult = project.checkProjectStructure()
+
+    if (checkResult != null) {
+      return {
+        errors: {
+          path: checkResult
+        }
+      }
+    }
     const sessions = this.getSessions()
+
+    if (sessions.find((s) => s.path == session.path)) {
+      return {
+        errors: {
+          path: SessionServiceErrors.PATH_EXISTED
+        }
+      }
+    }
+    if (sessions.find((s) => s.name == session.name)) {
+      return {
+        errors: {
+          name: SessionServiceErrors.NAME_EXISTED
+        }
+      }
+    }
+
+    const projectService = new ProjectService(session.path)
+    const errorCheck = projectService.checkProjectStructure()
+    if (errorCheck) {
+      return {
+        errors: {
+          path: errorCheck
+        }
+      }
+    }
+
     const id = sessions.length > 0 ? Math.max(...sessions.map((s) => s.id)) + 1 : 1
     const newSession: Session = { ...session, id }
 
@@ -86,16 +127,20 @@ class SessionService {
   async openSelectFolderDialog(): Promise<string | null> {
     const { dialog, BrowserWindow } = await import('electron')
 
-    // Get the currently focused window or create a reference if needed
     const focusedWindow = BrowserWindow.getFocusedWindow()
 
-    const result = await dialog.showOpenDialog(
-      focusedWindow || {
-        properties: ['openFile', 'openDirectory'],
-        title: 'Выберите папку проекта',
-        buttonLabel: 'Выбрать'
-      }
-    )
+    // Настройки выносим в отдельную переменную
+    const options: Electron.OpenDialogOptions = {
+      title: 'Выберите папку проекта',
+      buttonLabel: 'Выбрать',
+      properties: ['openDirectory', 'createDirectory']
+    }
+
+    // Если окно есть, привязываем диалог к нему (модальное окно)
+    // Если нет — просто открываем диалог
+    const result = focusedWindow
+      ? await dialog.showOpenDialog(focusedWindow, options)
+      : await dialog.showOpenDialog(options)
 
     if (!result.canceled && result.filePaths.length > 0) {
       return result.filePaths[0]

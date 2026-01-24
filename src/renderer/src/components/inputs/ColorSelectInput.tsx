@@ -22,7 +22,8 @@ export const ColorSelectInput: FC<ComponentProps<'input'>> = ({
             {
               'border-ring ring-gray-700/50 ring-[3px] border-gray-600': open
             },
-            'aria-invalid:ring-red-700/20 dark:aria-invalid:ring-red-700/40 aria-invalid:border-red-700',
+            'aria-invalid:border-red-700',
+            'group-[*[data-error="true"]]:border-red-700 group-[*[data-error="true"]]:ring-red-700/20 dark:group-[*[data-error="true"]]:ring-red-700/40 ',
             className
           )}
         >
