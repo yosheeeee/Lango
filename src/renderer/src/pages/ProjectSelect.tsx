@@ -1,18 +1,20 @@
 import { Button } from '@renderer/components/button'
-import { Logo } from '@renderer/components/logo'
+import { InlineLogo, Logo } from '@renderer/components/logo'
 import { ProjectSelectLayout } from '@renderer/layouts/ProjectSelectLayout'
 import { AddNewProjectModal } from '@renderer/modules/addNewProjectModal'
 import { LanguageSwitcher } from '@renderer/modules/languageSwitcher'
+import { useSessionStore } from '@renderer/stores/sessionStore'
 import { cn } from '@renderer/utils/cn'
 import { projectColors } from '@renderer/utils/projectColors'
 import { FilePlus2, Trash, Trash2 } from 'lucide-react'
-import { ReactNode, useEffect, useState } from 'react'
+import { ComponentProps, ReactNode, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Session } from 'src/domain/models/session'
 
 export default function ProjectSelectPage(): ReactNode {
   const [projects, setProjects] = useState<Session[]>([])
   const { t } = useTranslation('projectSelect')
+  const { setSession } = useSessionStore()
 
   async function fetchSessions() {
     const sessions = await window.api.session.getSessions()
@@ -27,6 +29,12 @@ export default function ProjectSelectPage(): ReactNode {
     setProjects((prev) => prev.filter((s) => s.id != id))
   }
 
+  async function selectSession(s: Session) {
+    await window.api.session.setCurrentSession(s.id)
+    setSession(s)
+    console.log('session selected')
+  }
+
   useEffect(() => {
     fetchSessions()
   }, [])
@@ -34,17 +42,21 @@ export default function ProjectSelectPage(): ReactNode {
   return (
     <ProjectSelectLayout className="justify-around">
       <header className="flex px-6 py-6 justify-between">
-        <div className="flex items-end gap-0.5">
-          <Logo className="h-10 block mb-1" />
-          <h2 className="font-semibold text-3xl leading-none">ango</h2>
-        </div>
+        <InlineLogo className="text-3xl" />
         <LanguageSwitcher />
       </header>
       <main className="flex-1 h-full  flex flex-col items-center justify-center gap-5 w-full max-w-md mx-auto">
         <h1 className="text-4xl">{t('title')}</h1>
         <div className="flex flex-col gap-3 w-full">
           {projects.length ? (
-            projects.map((p) => <Project {...p} onDelete={onDeleteSession} key={p.id} />)
+            projects.map((p) => (
+              <Project
+                {...p}
+                onClick={async () => await selectSession(p)}
+                onDelete={onDeleteSession}
+                key={p.id}
+              />
+            ))
           ) : (
             <p className="text-center font-[500]">{t('noProjects')}</p>
           )}
@@ -70,8 +82,9 @@ function Project({
   name,
   color,
   path,
-  onDelete: onOutherDelete
-}: Session & { onDelete: (id: Session['id']) => void }) {
+  onDelete: onOutherDelete,
+  onClick
+}: Session & { onDelete: (id: Session['id']) => void } & ComponentProps<'div'>) {
   const colors = projectColors[color]
   async function onDelete() {
     await window.api.session.removeSession(id)
@@ -85,6 +98,7 @@ function Project({
         colors?.base,
         colors?.hover
       )}
+      onClick={onClick}
     >
       <div className="flex justify-between gap-2 flex-wrap items-center">
         <h3 className="text-lg font-semibold">{name}</h3>

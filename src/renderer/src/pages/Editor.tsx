@@ -1,5 +1,6 @@
+import { EditorLayout } from '@renderer/layouts/EditorLayout'
 import { ReactNode } from 'react'
 
 export default function EditorPage(): ReactNode {
-  return <></>
+  return <EditorLayout>editor</EditorLayout>
 }
