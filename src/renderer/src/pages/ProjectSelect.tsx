@@ -5,7 +5,7 @@ import { AddNewProjectModal } from '@renderer/modules/addNewProjectModal'
 import { LanguageSwitcher } from '@renderer/modules/languageSwitcher'
 import { cn } from '@renderer/utils/cn'
 import { projectColors } from '@renderer/utils/projectColors'
-import { FilePlus2, Trash2 } from 'lucide-react'
+import { FilePlus2, Trash, Trash2 } from 'lucide-react'
 import { ReactNode, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Session } from 'src/domain/models/session'
@@ -46,18 +46,18 @@ export default function ProjectSelectPage(): ReactNode {
           {projects.length ? (
             projects.map((p) => <Project {...p} onDelete={onDeleteSession} key={p.id} />)
           ) : (
-            <p className="text-center font-[500]">No projects yet...</p>
+            <p className="text-center font-[500]">{t('noProjects')}</p>
           )}
         </div>
         <div className="relative border-t border-t-white w-full">
           <p className="absolute bottom-[50%] left-1/2 translate-y-1/2 -translate-x-1/2 bg-gray-900 px-3 text-lg">
-            or
+            {t('or')}
           </p>
         </div>
         <AddNewProjectModal onAdded={onAddNewSession}>
           <Button size={'lg'} className="w-full">
             <FilePlus2 />
-            Add new project
+            {t('addNewProject')}
           </Button>
         </AddNewProjectModal>
       </main>
@@ -88,8 +88,11 @@ function Project({
     >
       <div className="flex justify-between gap-2 flex-wrap items-center">
         <h3 className="text-lg font-semibold">{name}</h3>
-        <button onClick={onDelete} className={cn('cursor-pointer')}>
-          <Trash2 className="size-3.5" />
+        <button
+          onClick={onDelete}
+          className={cn('cursor-pointer', 'hover:text-red-500 transition-colors')}
+        >
+          <Trash className="size-4" />
         </button>
       </div>
       <p className="opacity-70 text-sm truncate self-start" style={{ direction: 'rtl' }}>

@@ -5,6 +5,7 @@ import {
   DropdownMenuTrigger
 } from '@renderer/components/dropdown'
 import { cn } from '@renderer/utils/cn'
+import { ChevronDown } from 'lucide-react'
 import { ComponentProps, FC, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Language } from 'src/domain/models/currentLanguage'
@@ -31,7 +32,10 @@ export const LanguageSwitcher: FC = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <LanguageComponent language={currentLanguage} />
+        <div className="flex gap-2 items-center pr-2">
+          <LanguageComponent language={currentLanguage} />
+          <ChevronDown className="size-4 group-data-[state=open]:rotate-180 transition-transform" />
+        </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         {Object.keys(languageTitles).map((key) => {
@@ -60,8 +64,8 @@ const LanguageComponent: FC<{ language: Language } & ComponentProps<'div'>> = ({
   }, [language])
   return (
     <div {...props} className={cn('flex items-center gap-1', props?.className)}>
-      {flag && <img src={flag} className="h-[18px]" />}
-      <span className="text-lg">{languageTitles[language]}</span>
+      {flag && <img src={flag} className="h-[18px] block" />}
+      <span className="select-none leading-none">{languageTitles[language]}</span>
     </div>
   )
 }

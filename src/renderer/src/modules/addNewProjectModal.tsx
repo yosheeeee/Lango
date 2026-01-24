@@ -18,10 +18,12 @@ import { ColorSelectInput } from '@renderer/components/inputs/ColorSelectInput'
 import { Session } from 'src/domain/models/session'
 import { zodResolver } from '@hookform/resolvers/zod'
 import z from 'zod'
+import { useTranslation } from 'react-i18next'
 
 export const AddNewProjectModal: FC<
   PropsWithChildren & { onAdded?: (session: Session) => void }
 > = ({ children, onAdded }) => {
+  const { t } = useTranslation(['addNewProject', 'common'])
   const [open, setOpen] = useState(false)
   const form = useForm({
     values: {
@@ -51,8 +53,7 @@ export const AddNewProjectModal: FC<
     const newSession = await window.api.session.addSession(data)
     if ('errors' in newSession) {
       Object.entries(newSession.errors).map(([key, value]) => {
-        console.log(key, value)
-        setError(key, { message: value })
+        setError(key, { message: t(`errors.${value}`) })
       })
       return
     }
@@ -69,7 +70,7 @@ export const AddNewProjectModal: FC<
     <Dialog open={open}>
       <Slot onClick={onClick}>{children}</Slot>
       <DialogContent>
-        <DialogTitle>Add new project</DialogTitle>
+        <DialogTitle>{t('title')}</DialogTitle>
         <Form
           {...form}
           className="grid grid-cols-[repeat(2,300px)] gap-4 items-start"
@@ -79,7 +80,7 @@ export const AddNewProjectModal: FC<
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Name</FormLabel>
+                <FormLabel>{t('name')}</FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
@@ -91,7 +92,7 @@ export const AddNewProjectModal: FC<
             name="color"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Color</FormLabel>
+                <FormLabel>{t('color')}</FormLabel>
                 <FormControl>
                   <ColorSelectInput {...field} />
                 </FormControl>
@@ -103,7 +104,7 @@ export const AddNewProjectModal: FC<
             name="path"
             render={({ field }) => (
               <FormItem className="col-span-full">
-                <FormLabel>Project folder</FormLabel>
+                <FormLabel>{t('projectPath')}</FormLabel>
                 <FormControl>
                   <PathInput {...field} />
                 </FormControl>
@@ -114,11 +115,11 @@ export const AddNewProjectModal: FC<
           <div className="col-span-full flex  items-center justify-end w-full gap-3">
             <Button type="submit" weight={'semibold'} color="cyan">
               <Check />
-              Submit
+              {t('common:sumbit')}
             </Button>
             <Button onClick={cancelAdd}>
               <X />
-              Cancel
+              {t('common:cancel')}
             </Button>
           </div>
         </Form>

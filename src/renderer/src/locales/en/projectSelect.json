@@ -1,3 +1,6 @@
 {
-  "title": "Select a Project"
+  "title": "Select a Project",
+  "noProject": "No projects yet...",
+  "or": "or",
+  "addNewProject": "Add new project"
 }
