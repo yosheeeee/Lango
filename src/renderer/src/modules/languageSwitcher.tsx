@@ -15,7 +15,13 @@ const languageTitles: Record<Language, string> = {
   ru: 'РУС'
 }
 
-export const LanguageSwitcher: FC = () => {
+export const LanguageSwitcher: FC<
+  ComponentProps<'div'> & {
+    optionProps?: Omit<ComponentProps<typeof LanguageComponent>, 'language'>
+    menuProps?: Omit<ComponentProps<typeof DropdownMenu>, 'children'>
+    selectedContainerClassName?: string
+  }
+> = ({ optionProps, menuProps, className, selectedContainerClassName, ...props }) => {
   const { i18n } = useTranslation()
   const [currentLanguage, setCurrentLanguage] = useState<Language>(window.currentLanguage || 'ru')
 
@@ -32,17 +38,17 @@ export const LanguageSwitcher: FC = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <div className="flex gap-2 items-center pr-2">
-          <LanguageComponent language={currentLanguage} />
+        <div className={cn('flex gap-2 items-center pr-2', className)} {...props}>
+          <LanguageComponent language={currentLanguage} className={selectedContainerClassName} />
           <ChevronDown className="size-4 group-data-[state=open]:rotate-180 transition-transform" />
         </div>
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
+      <DropdownMenuContent {...menuProps}>
         {Object.keys(languageTitles).map((key) => {
           const lang = key as Language
           return (
             <DropdownMenuItem asChild onClick={async () => await onSelectLanguage(lang)} key={key}>
-              <LanguageComponent language={lang} />
+              <LanguageComponent language={lang} {...optionProps} />
             </DropdownMenuItem>
           )
         })}
@@ -64,7 +70,7 @@ const LanguageComponent: FC<{ language: Language } & ComponentProps<'div'>> = ({
   }, [language])
   return (
     <div {...props} className={cn('flex items-center gap-1', props?.className)}>
-      {flag && <img src={flag} className="h-[18px] block" />}
+      {flag && <img src={flag} className="h-4.5 block" />}
       <span className="select-none leading-none">{languageTitles[language]}</span>
     </div>
   )

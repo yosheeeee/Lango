@@ -1,3 +1,4 @@
+import { ProjectsProvider } from '@renderer/providers/ProjectsProvider'
 import { routerPaths } from '@renderer/router/routerPaths'
 import { useSessionStore } from '@renderer/stores/sessionStore'
 import { cn } from '@renderer/utils/cn'
@@ -15,9 +16,11 @@ export const ProjectSelectLayout: FC<ComponentProps<'section'>> = ({ className, 
   }, [currentSession])
 
   return (
-    <section
-      className={cn('flex flex-col justify-between gap-5 h-full w-full', className)}
-      {...props}
-    />
+    <ProjectsProvider>
+      <section
+        className={cn('flex flex-col  gap-5 h-full w-full justify-around', className)}
+        {...props}
+      />
+    </ProjectsProvider>
   )
 }
