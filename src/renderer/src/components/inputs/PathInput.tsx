@@ -1,13 +1,19 @@
 import { cn } from '@renderer/utils/cn'
 import { Folder } from 'lucide-react'
-import { ComponentProps, FC } from 'react'
+import { FC } from 'react'
 import { Button } from '../button'
 
-export const PathInput: FC<ComponentProps<'input'>> = ({ className, value, onChange }) => {
-  async function onButtonClick() {
+interface PathInputProps {
+  value: string
+  onChange?: (value: string) => void
+  className?: string
+}
+
+export const PathInput: FC<PathInputProps> = ({ className, value, onChange }) => {
+  async function onButtonClick(): Promise<void> {
     const path = await window.api.session.openSelectFolderDialog()
     if (path) {
-      onChange(path)
+      onChange?.(path)
     }
   }
   return (

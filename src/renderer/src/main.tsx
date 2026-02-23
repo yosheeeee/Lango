@@ -9,9 +9,9 @@ import { RouterProvider } from 'react-router-dom'
 import { router } from './router'
 import './utils/i18n' // Import without assigning to variable since it initializes automatically
 
-async function startApp() {
+async function startApp(): Promise<void> {
   // Wait for i18n to initialize before rendering the app
-  const i18n = await import('./utils/i18n')
+  await import('./utils/i18n')
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>

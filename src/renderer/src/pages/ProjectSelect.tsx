@@ -7,11 +7,11 @@ import { useProject, useProjects } from '@renderer/providers/ProjectsProvider'
 import { cn } from '@renderer/utils/cn'
 import { projectColors } from '@renderer/utils/projectColors'
 import { FilePlus2, Trash } from 'lucide-react'
-import { ComponentProps, ReactNode } from 'react'
+import { ComponentProps } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Session } from 'src/domain/models/session'
 
-export default function ProjectSelectPage(): ReactNode {
+export default function ProjectSelectPage(): React.JSX.Element {
   return (
     <ProjectSelectLayout className="justify-around">
       <PageContent />
@@ -19,7 +19,7 @@ export default function ProjectSelectPage(): ReactNode {
   )
 }
 
-function PageContent() {
+function PageContent(): React.JSX.Element {
   const { onAddNewSession, projects } = useProjects()
   const { t } = useTranslation('projectSelect')
   return (

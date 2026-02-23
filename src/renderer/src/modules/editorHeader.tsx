@@ -1,10 +1,10 @@
-import { InlineLogo, Logo } from '@renderer/components/logo'
+import { InlineLogo } from '@renderer/components/logo'
 import { ComponentProps, FC } from 'react'
 import { LanguageSwitcher } from './languageSwitcher'
 import { ProjectSearch } from './projectSearch'
 import { HeaderMenu } from './headerMenu'
 
-export const EditorHeader: FC<ComponentProps<'header'>> = (props) => {
+export const EditorHeader: FC<ComponentProps<'header'>> = () => {
   return (
     <header className="flex items-center justify-between py-1 px-3 border-b-gray-700 border-b">
       <div>

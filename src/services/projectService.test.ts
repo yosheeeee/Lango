@@ -9,13 +9,13 @@ describe('ProjectService', () => {
   let projectService: ProjectService
   let testDir: string
 
-  const createTestDirectory = () => {
+  const createTestDirectory = (): string => {
     const dir = path.join(tmpdir(), `test-project-${Date.now()}`)
     fs.mkdirSync(dir, { recursive: true })
     return dir
   }
 
-  const cleanupDirectory = (dir: string) => {
+  const cleanupDirectory = (dir: string): void => {
     if (fs.existsSync(dir)) {
       fs.rmSync(dir, { recursive: true, force: true })
     }

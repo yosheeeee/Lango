@@ -1,16 +1,18 @@
 import { cn } from '@renderer/utils/cn'
 import { Popover } from 'radix-ui'
-import { FC, ComponentProps, useState } from 'react'
+import { FC, useState } from 'react'
 import { Button } from '../button'
 import { Pipette } from 'lucide-react'
 import { projectColors } from '@renderer/utils/projectColors'
+import { Color } from 'src/domain/models/session'
 
-export const ColorSelectInput: FC<ComponentProps<'input'>> = ({
-  name,
-  className,
-  onChange,
-  value
-}) => {
+interface ColorSelectInputProps {
+  value: Color
+  onChange?: (value: Color) => void
+  className?: string
+}
+
+export const ColorSelectInput: FC<ColorSelectInputProps> = ({ className, onChange, value }) => {
   const [open, setOpen] = useState(false)
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
@@ -52,13 +54,14 @@ export const ColorSelectInput: FC<ComponentProps<'input'>> = ({
           )}
         >
           <div className="flex flex-wrap gap-1 justify-center">
-            {Object.entries(projectColors).map(([key, value]) => (
+            {Object.entries(projectColors).map(([key, val]) => (
               <button
+                key={key}
                 onClick={() => {
-                  onChange?.(key)
+                  onChange?.(key as Color)
                   setOpen(false)
                 }}
-                className={cn('size-[25px] rounded-sm cursor-pointer', value.accent, value.hover)}
+                className={cn('size-[25px] rounded-sm cursor-pointer', val.accent, val.hover)}
               ></button>
             ))}
           </div>

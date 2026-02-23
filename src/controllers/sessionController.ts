@@ -33,6 +33,11 @@ ipcMain.handle('session:removeCurrentSession', () => {
   return true
 })
 
+// Удалить все сессии
+ipcMain.handle('session:removeAllSessions', () => {
+  sessionService.removeAllSessions()
+})
+
 // Открыть диалог выбора папки
 ipcMain.handle('session:openSelectFolderDialog', () => {
   return sessionService.openSelectFolderDialog()

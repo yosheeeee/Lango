@@ -1,35 +1,46 @@
 import { useSessionStore } from '@renderer/stores/sessionStore'
-import { useState, useEffect, createContext, useContext, FC, PropsWithChildren } from 'react'
+import {
+  useState,
+  useEffect,
+  createContext,
+  useContext,
+  FC,
+  PropsWithChildren,
+  useCallback
+} from 'react'
 import { Session } from 'src/domain/models/session'
 
-const projectsContext = createContext<ReturnType<typeof useProjectsContext>>()
+const projectsContext = createContext<ReturnType<typeof useProjectsContext> | null>(null)
 
 function useProjectsContext() {
   const { setSession } = useSessionStore()
   const [projects, setProjects] = useState<Session[]>([])
 
-  async function fetchSessions() {
+  const fetchSessions = useCallback(async (): Promise<void> => {
     const sessions = await window.api.session.getSessions()
     setProjects(sessions)
-  }
+  }, [])
 
-  function onAddNewSession(newSession: Session) {
+  const onAddNewSession = useCallback((newSession: Session): void => {
     setProjects((prev) => [newSession, ...prev])
-  }
+  }, [])
 
-  function onDeleteSession(id: Session['id']) {
+  const onDeleteSession = useCallback((id: Session['id']): void => {
     setProjects((prev) => prev.filter((s) => s.id != id))
-  }
+  }, [])
 
-  async function selectSession(s: Session) {
-    await window.api.session.setCurrentSession(s.id)
-    setSession(s)
-    console.log('session selected')
-  }
+  const selectSession = useCallback(
+    async (s: Session): Promise<void> => {
+      await window.api.session.setCurrentSession(s.id)
+      setSession(s)
+      console.log('session selected')
+    },
+    [setSession]
+  )
 
   useEffect(() => {
     fetchSessions()
-  }, [])
+  }, [fetchSessions])
 
   return {
     projects,
@@ -42,18 +53,25 @@ function useProjectsContext() {
 
 export function useProjects() {
   const context = useContext(projectsContext)
+  if (!context) {
+    throw new Error('useProjects must be used within a ProjectsProvider')
+  }
   return context
 }
 
 export function useProject(project: Session) {
-  const { onDeleteSession, selectSession } = useContext(projectsContext)
+  const context = useContext(projectsContext)
+  if (!context) {
+    throw new Error('useProject must be used within a ProjectsProvider')
+  }
+  const { onDeleteSession, selectSession } = context
 
-  const onDeleteProject = async () => {
+  const onDeleteProject = async (): Promise<void> => {
     await window.api.session.removeSession(project.id)
     onDeleteSession(project.id)
   }
 
-  const onSelectProject = () => selectSession(project)
+  const onSelectProject = async (): Promise<void> => selectSession(project)
 
   return {
     onDeleteProject,

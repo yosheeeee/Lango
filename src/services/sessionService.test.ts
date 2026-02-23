@@ -1,6 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { sessionService } from './sessionService'
-import { Session } from '../domain/models/session'
 import * as fs from 'fs'
 import * as path from 'path'
 import { tmpdir } from 'os'
@@ -10,19 +9,19 @@ describe('SessionService', () => {
   let testDir2: string
   let testDir3: string
 
-  const createTestDirectory = () => {
+  const createTestDirectory = (): string => {
     const dir = path.join(tmpdir(), `test-project-${Date.now()}-${Math.random()}`)
     fs.mkdirSync(dir, { recursive: true })
     return dir
   }
 
-  const cleanupDirectory = (dir: string) => {
+  const cleanupDirectory = (dir: string): void => {
     if (fs.existsSync(dir)) {
       fs.rmSync(dir, { recursive: true, force: true })
     }
   }
 
-  const createValidProjectStructure = (dir: string) => {
+  const createValidProjectStructure = (dir: string): void => {
     const enDir = path.join(dir, 'en')
     fs.mkdirSync(enDir, { recursive: true })
     fs.writeFileSync(path.join(enDir, 'common.json'), '{}')
@@ -55,7 +54,7 @@ describe('SessionService', () => {
       // Используем простую структуру без вложенных папок
       const simpleDir = createTestDirectory()
       fs.writeFileSync(path.join(simpleDir, 'test.json'), '{}')
-      
+
       try {
         const result = sessionService.addSession({
           path: simpleDir,

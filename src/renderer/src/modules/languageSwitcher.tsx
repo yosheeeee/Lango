@@ -25,7 +25,7 @@ export const LanguageSwitcher: FC<
   const { i18n } = useTranslation()
   const [currentLanguage, setCurrentLanguage] = useState<Language>(window.currentLanguage || 'ru')
 
-  async function onSelectLanguage(lang: Language): Promise<void> {
+  const onSelectLanguage = async (lang: Language): Promise<void> => {
     try {
       await window.api.currentLanguage.setCurrentLanguage(lang)
       i18n.changeLanguage(lang)

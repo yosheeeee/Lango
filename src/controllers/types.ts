@@ -8,6 +8,10 @@ export interface ControllerAPI {
 
 // Тип для использования в renderer
 export type ControllerHandler = ControllerAPI
-export type GenericControllerHandler<S extends Record<string, any>> = {
-  [key in keyof S]: (...args: Parameters<S[key]>) => Promise<ReturnType<S[key]>>
+export type GenericControllerHandler<T> = {
+  [K in keyof T]: T[K] extends (...args: infer P) => infer R
+    ? R extends Promise<unknown>
+      ? (...args: P) => R
+      : (...args: P) => Promise<R>
+    : T[K]
 }
