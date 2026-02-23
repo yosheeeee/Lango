@@ -76,11 +76,15 @@ describe('SessionService', () => {
   })
 
   describe('addSession', () => {
-    const newSessionData = {
-      path: testDir1,
-      name: 'Test Project',
-      color: 'blue' as const
-    }
+    let newSessionData: { path: string; name: string; color: 'blue' }
+
+    beforeEach(() => {
+      newSessionData = {
+        path: testDir1,
+        name: 'Test Project',
+        color: 'blue'
+      }
+    })
 
     it('должен добавить новую сессию', () => {
       const result = sessionService.addSession(newSessionData)
