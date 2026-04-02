@@ -18,22 +18,14 @@ type SessionAcitons = {
 type SessionStore = SessionState & SessionAcitons
 
 const initialState: SessionState = {
-  currentSession: null,
-  sessions: null
+  currentSession: window.currentSession,
+  sessions: window.sessions
 }
 
-export const useSessionStore = create<SessionStore>()(
-  persist(
-    (set) => ({
-      ...initialState,
-      setSession: (session) => set({ currentSession: session }),
-      setSessions: (sessions) => set({ sessions }),
-      clearState: () => set({ ...initialState }),
-      clearSession: () => set({ currentSession: null })
-    }),
-    {
-      name: 'session-storage',
-      storage: createJSONStorage(() => localStorage)
-    }
-  )
-)
+export const useSessionStore = create<SessionStore>()((set, get) => ({
+  ...initialState,
+  setSession: (session) => set({ currentSession: session }),
+  setSessions: (sessions) => set({ sessions }),
+  clearState: () => set({ ...initialState }),
+  clearSession: () => set({ currentSession: null })
+}))

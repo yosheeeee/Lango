@@ -13,8 +13,7 @@ import { Session } from 'src/domain/models/session'
 const projectsContext = createContext<ReturnType<typeof useProjectsContext> | null>(null)
 
 function useProjectsContext() {
-  const { setSession } = useSessionStore()
-  const [projects, setProjects] = useState<Session[]>([])
+  const { setSession, sessions: projects, setSessions: setProjects } = useSessionStore()
 
   const fetchSessions = useCallback(async (): Promise<void> => {
     const sessions = await window.api.session.getSessions()
