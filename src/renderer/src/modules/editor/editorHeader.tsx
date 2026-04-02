@@ -1,6 +1,6 @@
 import { InlineLogo } from '@renderer/components/logo'
 import { ComponentProps, FC } from 'react'
-import { LanguageSwitcher } from './languageSwitcher'
+import { LanguageSwitcher } from '../languageSwitcher'
 import { ProjectSearch } from './projectSearch'
 import { HeaderMenu } from './headerMenu'
 

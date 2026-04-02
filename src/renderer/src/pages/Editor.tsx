@@ -1,5 +1,8 @@
+import DetailLayout from '@renderer/layouts/DetailLayout'
 import { EditorLayout } from '@renderer/layouts/EditorLayout'
-import { EditorHeader } from '@renderer/modules/editorHeader'
+import MasterLayout from '@renderer/layouts/MasterLayout'
+import EditorFooter from '@renderer/modules/editor/editorFooter'
+import { EditorHeader } from '@renderer/modules/editor/editorHeader'
 import { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -8,7 +11,11 @@ export default function EditorPage(): ReactNode {
   return (
     <EditorLayout>
       <EditorHeader />
-      {t('welcomeMessage')}
+      <section id="main-editor" className="flex-1">
+        <MasterLayout />
+        <DetailLayout />
+      </section>
+      <EditorFooter />
     </EditorLayout>
   )
 }
