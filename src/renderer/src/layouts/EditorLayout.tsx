@@ -1,4 +1,4 @@
-import ModulesVisibilityProvider from '@renderer/providers/ModulesVisibilityProvider'
+import KeybindsProvider from '@renderer/providers/KeybindsProvider'
 import { routerPaths } from '@renderer/router/routerPaths'
 import { useSessionStore } from '@renderer/stores/sessionStore'
 import { FC, PropsWithChildren, useEffect } from 'react'
@@ -16,7 +16,7 @@ export const EditorLayout: FC<PropsWithChildren> = ({ children }) => {
 
   return (
     <section className="flex flex-col w-full h-full">
-      <ModulesVisibilityProvider>{children}</ModulesVisibilityProvider>
+      <KeybindsProvider>{children}</KeybindsProvider>
     </section>
   )
 }

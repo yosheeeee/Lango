@@ -1,0 +1,14 @@
+{
+  "title": "Keybinds Cheat Sheet",
+  "keybind": "Keybind",
+  "action": "Action",
+  "master": {
+    "toggle": "Toggle left panel"
+  },
+  "cheatSheet": {
+    "toggle": "Toggle keybind cheet sheet"
+  },
+  "search": {
+    "toggle": "Toggle search tool"
+  }
+}

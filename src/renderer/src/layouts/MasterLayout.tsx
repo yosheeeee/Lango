@@ -1,12 +1,12 @@
-import { useModulesVisibility } from '@renderer/providers/ModulesVisibilityProvider'
+import { useEditorStore } from '@renderer/stores/visibilityStore'
 import { FC } from 'react'
 
 interface MasterLayoutProps {}
 
 const MasterLayout: FC<MasterLayoutProps> = () => {
-  const { masterVisibile } = useModulesVisibility()
+  const { masterPanel } = useEditorStore()
 
-  if (!masterVisibile) return null
+  if (!masterPanel) return null
 
   return <section id="master" className="w-[400px] border-r-gray-700 border-r h-full"></section>
 }

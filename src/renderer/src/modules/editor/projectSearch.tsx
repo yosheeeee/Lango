@@ -1,13 +1,16 @@
 import { Input } from '@renderer/components/form'
+import { useEditorStore } from '@renderer/stores/visibilityStore'
 import { Search } from 'lucide-react'
 import { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 
 export const ProjectSearch: FC = () => {
   const { t } = useTranslation('projectSearch')
+  const { searchRef } = useEditorStore()
   return (
     <div className="relative">
       <Input
+        ref={searchRef}
         placeholder={t('searchPlaceholder')}
         className="pl-10 py-1 h-6.25 !text-sm placeholder:text-center"
       />
