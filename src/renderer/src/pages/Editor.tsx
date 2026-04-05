@@ -18,7 +18,6 @@ export default function EditorPage(): ReactNode {
       <EditorHeader />
       <ResizablePanelGroup orientation="horizontal" className="flex-1 h-full">
         <MasterLayout />
-        <ResizableHandle />
         <ResizablePanel defaultSize={'75%'}>
           <DetailLayout />
         </ResizablePanel>

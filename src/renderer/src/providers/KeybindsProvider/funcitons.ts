@@ -4,6 +4,15 @@ export const keybindFunctions = {
   'master.toggle'() {
     useEditorStore.getState().toggleMaster()
   },
+  'projectTree.focus'() {
+    let { masterPanel, projectTreeRef, toggleMaster } = useEditorStore.getState()
+    if (!masterPanel) {
+      toggleMaster()
+      requestAnimationFrame(() => projectTreeRef?.current?.focus())
+    } else {
+      projectTreeRef?.current?.focus()
+    }
+  },
   'cheatSheet.toggle'() {
     useEditorStore.getState().toggleCheetSheet()
   },

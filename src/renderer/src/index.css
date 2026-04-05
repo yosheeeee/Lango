@@ -1,5 +1,19 @@
 @import 'tailwindcss';
 
+@theme inline {
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+  --color-gray-950: #030712;
+}
+
 html {
   @apply h-screen w-screen;
 }
@@ -12,4 +26,23 @@ body {
 body {
   @apply bg-gray-900 text-gray-50;
   font-family: 'Geist';
+}
+* {
+  scrollbar-color: var(--color-gray-700), black;
+  scrollbar-width: thin;
+}
+*::--webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-gray-700);
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*:hover::-webkit-scrollbar-thumb {
+  background: var(--color-gray-500);
+}
+*:hover::-webkit-scrollbar-track {
+  background: transparent;
 }

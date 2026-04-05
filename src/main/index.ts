@@ -22,6 +22,12 @@ function createWindow(): void {
     mainWindow.show()
   })
 
+  mainWindow.webContents.on('did-fail-load', (_event, errorCode, _errorDescription, validatedURL) => {
+    if (errorCode === -21 /* ERR_NETWORK_CHANGED */ && validatedURL) {
+      setTimeout(() => mainWindow.loadURL(validatedURL), 300)
+    }
+  })
+
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }

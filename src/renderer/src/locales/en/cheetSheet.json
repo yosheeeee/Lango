@@ -10,5 +10,8 @@
   },
   "search": {
     "toggle": "Toggle search tool"
+  },
+  "projectTree": {
+    "focus": "Focus project tree"
   }
 }

@@ -5,6 +5,7 @@ type VisibilityState = {
   cheetSheet: boolean
   masterPanel: boolean
   searchRef: RefObject<HTMLInputElement>
+  projectTreeRef: RefObject<HTMLDivElement>
 }
 
 type VisibilityActions = {
@@ -19,7 +20,21 @@ export const useEditorStore = create<VisibilityStore>()((set, get) => ({
   cheetSheet: false,
   masterPanel: true,
   searchRef: React.createRef<HTMLInputElement>(null),
-  toggleMaster: () => set((prev) => ({ masterPanel: !prev.masterPanel })),
+  projectTreeRef: React.createRef<HTMLDivElement>(null),
+  toggleMaster: () => {
+    let newState = false
+    set((prev) => {
+      newState = !prev.masterPanel
+      return {
+        masterPanel: newState
+      }
+    })
+    if (newState) {
+      requestAnimationFrame(() => {
+        get().projectTreeRef.current?.focus()
+      })
+    }
+  },
   setCheetSheet: (newVal: boolean) => set({ cheetSheet: newVal }),
   toggleCheetSheet: () =>
     set((prev) => ({
