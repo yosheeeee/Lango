@@ -1,3 +1,4 @@
+import { ResizablePanel } from '@renderer/components/resizable'
 import { useEditorStore } from '@renderer/stores/visibilityStore'
 import { FC } from 'react'
 
@@ -8,7 +9,13 @@ const MasterLayout: FC<MasterLayoutProps> = () => {
 
   if (!masterPanel) return null
 
-  return <section id="master" className="w-[400px] border-r-gray-700 border-r h-full"></section>
+  return (
+    <ResizablePanel minSize={'100px'} defaultSize={'30%'}>
+      <section id="master" className="w-full h-full flex items-center justify-center">
+        <p>Master</p>
+      </section>
+    </ResizablePanel>
+  )
 }
 
 export default MasterLayout

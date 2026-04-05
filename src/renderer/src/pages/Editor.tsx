@@ -1,3 +1,8 @@
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup
+} from '@renderer/components/resizable'
 import DetailLayout from '@renderer/layouts/DetailLayout'
 import { EditorLayout } from '@renderer/layouts/EditorLayout'
 import MasterLayout from '@renderer/layouts/MasterLayout'
@@ -11,10 +16,13 @@ export default function EditorPage(): ReactNode {
   return (
     <EditorLayout>
       <EditorHeader />
-      <section id="main-editor" className="flex-1">
+      <ResizablePanelGroup orientation="horizontal" className="flex-1 h-full">
         <MasterLayout />
-        <DetailLayout />
-      </section>
+        <ResizableHandle />
+        <ResizablePanel defaultSize={'75%'}>
+          <DetailLayout />
+        </ResizablePanel>
+      </ResizablePanelGroup>
       <EditorFooter />
     </EditorLayout>
   )
