@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron'
 import { sessionService } from '../services/sessionService'
+import { stopFileWatcher } from '../services/fileWatcher'
 import { GenericControllerHandler } from './types'
 
 // Получить все сессии
@@ -14,7 +15,13 @@ ipcMain.handle('session:add', (_, sessionData) => {
 
 // Удалить сессию по ID
 ipcMain.handle('session:remove', (_, id: number) => {
-  return sessionService.removeSession(id)
+  const result = sessionService.removeSession(id)
+  // Если удалили текущую сессию — останавливаем watcher
+  if (result) {
+    const current = sessionService.getCurrentSession()
+    if (!current) stopFileWatcher()
+  }
+  return result
 })
 
 // Получить текущую сессию
@@ -24,6 +31,7 @@ ipcMain.handle('session:getCurrentSession', () => {
 
 // Установить текущую сессию
 ipcMain.handle('session:setCurrentSession', (_, id: number) => {
+  stopFileWatcher()
   return sessionService.setCurrentSession(id)
 })
 

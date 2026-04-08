@@ -1,9 +1,11 @@
 import { CurrentLanguageHandler } from './currentLanguageController'
 import { SessionHandler } from './sessionController'
+import { ProjectHandler } from './projectController'
 
 export interface ControllerAPI {
   session: SessionHandler
   currentLanguage: CurrentLanguageHandler
+  project: ProjectHandler
 }
 
 // Тип для использования в renderer

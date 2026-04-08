@@ -19,5 +19,9 @@ export const api: ControllerHandler = {
   currentLanguage: {
     getCurrentLanguage: () => ipcRenderer.invoke('getCurrentLanguage'),
     setCurrentLanguage: (lang: Language) => ipcRenderer.invoke('setCurrentLanguage', lang)
+  },
+  project: {
+    getFileTree: () => ipcRenderer.invoke('project:getFileTree'),
+    stopWatcher: () => ipcRenderer.invoke('project:stopWatcher')
   }
 }

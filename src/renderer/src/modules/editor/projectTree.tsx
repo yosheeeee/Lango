@@ -1,122 +1,9 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { tinykeys } from 'tinykeys'
 import { FileTreeGroup } from '@renderer/components/fileTree'
 import { useEditorStore } from '@renderer/stores/visibilityStore'
-
-const mockTree: FileTreeGroup = {
-  name: 'locales',
-  nestedItems: [
-    {
-      name: 'en',
-      nestedItems: [
-        { name: 'common.json', link: '/locales/en/common' },
-        { name: 'editor.json', link: '/locales/en/editor' },
-        { name: 'headerMenu.json', link: '/locales/en/headerMenu' },
-        {
-          name: 'addNewProject',
-          nestedItems: [
-            {
-              name: 'errors',
-              nestedItems: [
-                {
-                  name: 'path_existed.json',
-                  link: '/locales/en/addNewProject/errors/path_existed'
-                },
-                {
-                  name: 'name_existed.json',
-                  link: '/locales/en/addNewProject/errors/name_existed'
-                },
-                {
-                  name: 'folder_not_found.json',
-                  link: '/locales/en/addNewProject/errors/folder_not_found'
-                },
-                {
-                  name: 'deepLevel4',
-                  nestedItems: [
-                    {
-                      name: 'error_checking.json',
-                      link: '/locales/en/addNewProject/errors/deepLevel4/error_checking'
-                    }
-                  ]
-                }
-              ]
-            },
-            { name: 'title.json', link: '/locales/en/addNewProject/title' },
-            { name: 'name.json', link: '/locales/en/addNewProject/name' },
-            { name: 'color.json', link: '/locales/en/addNewProject/color' },
-            { name: 'projectPath.json', link: '/locales/en/addNewProject/projectPath' }
-          ]
-        },
-        { name: 'projectSearch.json', link: '/locales/en/projectSearch' },
-        { name: 'projectSelect.json', link: '/locales/en/projectSelect' },
-        {
-          name: 'cheetSheet',
-          nestedItems: [
-            {
-              name: 'master',
-              nestedItems: [
-                {
-                  name: 'deepNested',
-                  nestedItems: [
-                    { name: 'toggle.json', link: '/locales/en/cheetSheet/master/deepNested/toggle' }
-                  ]
-                }
-              ]
-            },
-            {
-              name: 'cheatSheet',
-              nestedItems: [
-                { name: 'toggle.json', link: '/locales/en/cheetSheet/cheatSheet/toggle' }
-              ]
-            },
-            {
-              name: 'search',
-              nestedItems: [{ name: 'toggle.json', link: '/locales/en/cheetSheet/search/toggle' }]
-            },
-            { name: 'title.json', link: '/locales/en/cheetSheet/title' },
-            { name: 'keybind.json', link: '/locales/en/cheetSheet/keybind' },
-            { name: 'action.json', link: '/locales/en/cheetSheet/action' }
-          ]
-        }
-      ]
-    },
-    {
-      name: 'ru',
-      nestedItems: [
-        { name: 'common.json', link: '/locales/ru/common' },
-        { name: 'editor.json', link: '/locales/ru/editor' },
-        { name: 'headerMenu.json', link: '/locales/ru/headerMenu' },
-        {
-          name: 'addNewProject',
-          nestedItems: [
-            {
-              name: 'errors',
-              nestedItems: [
-                {
-                  name: 'path_existed.json',
-                  link: '/locales/ru/addNewProject/errors/path_existed'
-                },
-                {
-                  name: 'name_existed.json',
-                  link: '/locales/ru/addNewProject/errors/name_existed'
-                },
-                {
-                  name: 'folder_not_found.json',
-                  link: '/locales/ru/addNewProject/errors/folder_not_found'
-                }
-              ]
-            },
-            { name: 'title.json', link: '/locales/ru/addNewProject/title' },
-            { name: 'name.json', link: '/locales/ru/addNewProject/name' }
-          ]
-        },
-        { name: 'projectSearch.json', link: '/locales/ru/projectSearch' },
-        { name: 'projectSelect.json', link: '/locales/ru/projectSelect' },
-        { name: 'cheetSheet.json', link: '/locales/ru/cheetSheet' }
-      ]
-    }
-  ]
-}
+import { useSessionStore } from '@renderer/stores/sessionStore'
+import { useFileTreeStore } from '@renderer/stores/fileTreeStore'
 
 function getVisibleItems(container: HTMLElement): HTMLElement[] {
   return Array.from(container.querySelectorAll<HTMLElement>('[data-tree-item]')).filter(
@@ -126,6 +13,24 @@ function getVisibleItems(container: HTMLElement): HTMLElement[] {
 
 export default function ProjectTree() {
   const { projectTreeRef: ref } = useEditorStore()
+  const { currentSession } = useSessionStore()
+  const { tree, isLoading, fetchTree, invalidateTree } = useFileTreeStore()
+
+  // Загрузка дерева при маунте и при смене сессии
+  useEffect(() => {
+    fetchTree()
+  }, [currentSession?.id])
+
+  // Подписка на изменения дерева файлов от main процесса
+  useEffect(() => {
+    const handler = () => {
+      invalidateTree()
+    }
+    window.electron.ipcRenderer?.on('file-tree:changed', handler)
+    return () => {
+      window.electron.ipcRenderer?.removeListener('file-tree:changed', handler)
+    }
+  }, [currentSession?.id])
 
   useEffect(() => {
     const el = ref.current
@@ -213,7 +118,46 @@ export default function ProjectTree() {
     })
 
     return unsubscribe
-  }, [])
+  }, [tree])
+
+  if (!currentSession) {
+    return (
+      <section
+        ref={ref}
+        id="project-tree"
+        tabIndex={0}
+        className="flex items-center justify-center h-full w-full px-4 py-3 min-w-max outline-none text-gray-400"
+      >
+        No project selected
+      </section>
+    )
+  }
+
+  if (isLoading && !tree) {
+    return (
+      <section
+        ref={ref}
+        id="project-tree"
+        tabIndex={0}
+        className="flex items-center justify-center h-full w-full px-4 py-3 min-w-max outline-none text-gray-400"
+      >
+        Loading...
+      </section>
+    )
+  }
+
+  if (!tree || tree.length === 0) {
+    return (
+      <section
+        ref={ref}
+        id="project-tree"
+        tabIndex={0}
+        className="flex items-center justify-center h-full w-full px-4 py-3 min-w-max outline-none text-gray-400"
+      >
+        No localization folders found
+      </section>
+    )
+  }
 
   return (
     <section
@@ -227,7 +171,11 @@ export default function ProjectTree() {
         }
       }}
     >
-      <FileTreeGroup {...mockTree} defaultOpen={true} />
+      <div className="flex flex-col gap-1 w-full">
+        {tree.map((locale) => (
+          <FileTreeGroup key={locale.name} {...locale} defaultOpen={true} />
+        ))}
+      </div>
     </section>
   )
 }

@@ -1,12 +1,145 @@
 import fs from 'fs'
 import path from 'path'
 import { CheckProjectStructureErrors } from '../domain/models/errors'
+import { FileTreeGroup, FileTreeItem } from '../domain/models/fileTree'
 
 export class ProjectService {
   private projectPath: string
 
   constructor(projectPath: string) {
     this.projectPath = projectPath
+  }
+
+  /**
+   * Строит дерево файлов проекта с перекрёстной проверкой сирот.
+   * Папки первого уровня считаются локализациями.
+   * Файл помечается как isOrphan, если он присутствует НЕ во всех локализациях.
+   */
+  getFileTree(): FileTreeGroup[] {
+    try {
+      const locales = this.getLocaleFolders()
+      if (locales.length === 0) return []
+
+      // Собираем все уникальные относительные пути файлов across all locales
+      const allFilePaths = new Map<string, Set<string>>() // relativePath -> Set<locale>
+
+      for (const locale of locales) {
+        const localePath = path.join(this.projectPath, locale)
+        const files = this.collectJsonFiles(localePath, '')
+        for (const filePath of files) {
+          if (!allFilePaths.has(filePath)) {
+            allFilePaths.set(filePath, new Set())
+          }
+          allFilePaths.get(filePath)!.add(locale)
+        }
+      }
+
+      // Определяем сироты ли: файл есть не во всех локализациях
+      const isOrphan = (relativePath: string): boolean => {
+        const localesWithFile = allFilePaths.get(relativePath)
+        return localesWithFile ? localesWithFile.size !== locales.length : false
+      }
+
+      // Строим дерево
+      const tree: FileTreeGroup[] = locales.map((locale) => {
+        const localePath = path.join(this.projectPath, locale)
+        const nestedItems = this.buildTreeItems(localePath, '', isOrphan)
+        return { name: locale, nestedItems }
+      })
+
+      return tree
+    } catch {
+      return []
+    }
+  }
+
+  /**
+   * Рекурсивно собирает .json файлы и строит дерево элементов.
+   */
+  private buildTreeItems(
+    dirPath: string,
+    relativeDir: string,
+    isOrphanCheck: (relativePath: string) => boolean
+  ): (FileTreeGroup | FileTreeItem)[] {
+    const items: (FileTreeGroup | FileTreeItem)[] = []
+
+    try {
+      const entries = fs.readdirSync(dirPath, { withFileTypes: true })
+      const meaningfulItems = entries.filter((item) => !this.isSystemFile(item.name))
+
+      // Сначала папки, потом файлы (для удобства отображения)
+      const dirs = meaningfulItems.filter((i) => i.isDirectory()).sort((a, b) => a.name.localeCompare(b.name))
+      const files = meaningfulItems.filter((i) => i.isFile() && i.name.toLowerCase().endsWith('.json')).sort((a, b) => a.name.localeCompare(b.name))
+
+      for (const dir of dirs) {
+        const subDirPath = path.join(dirPath, dir.name)
+        const subRelativeDir = relativeDir ? `${relativeDir}/${dir.name}` : dir.name
+        const nestedItems = this.buildTreeItems(subDirPath, subRelativeDir, isOrphanCheck)
+
+        // Папка — сирота, если хотя бы один её элемент — сирота
+        const hasOrphan = nestedItems.some((item) => 'isOrphan' in item && item.isOrphan)
+
+        items.push({
+          name: dir.name,
+          nestedItems,
+          isOrphan: hasOrphan || undefined
+        })
+      }
+
+      for (const file of files) {
+        const relativePath = relativeDir ? `${relativeDir}/${file.name}` : file.name
+        const nameWithoutExt = file.name.replace(/\.json$/i, '')
+        items.push({
+          name: nameWithoutExt,
+          link: `/${relativeDir}/${nameWithoutExt}`.replace('//', '/'),
+          isOrphan: isOrphanCheck(relativePath) || undefined
+        })
+      }
+    } catch {
+      // ignore
+    }
+
+    return items
+  }
+
+  /**
+   * Рекурсивно собирает все .json файлы в директории (для проверки сирот).
+   */
+  private collectJsonFiles(dirPath: string, relativeDir: string): string[] {
+    const files: string[] = []
+    try {
+      const entries = fs.readdirSync(dirPath, { withFileTypes: true })
+      const meaningfulItems = entries.filter((item) => !this.isSystemFile(item.name))
+
+      for (const item of meaningfulItems) {
+        if (item.isDirectory()) {
+          const subDirPath = path.join(dirPath, item.name)
+          const subRelativeDir = relativeDir ? `${relativeDir}/${item.name}` : item.name
+          files.push(...this.collectJsonFiles(subDirPath, subRelativeDir))
+        } else if (item.isFile() && item.name.toLowerCase().endsWith('.json')) {
+          const relativePath = relativeDir ? `${relativeDir}/${item.name}` : item.name
+          files.push(relativePath)
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return files
+  }
+
+  /**
+   * Возвращает список папок первого уровня (локализаций), исключая системные.
+   */
+  private getLocaleFolders(): string[] {
+    try {
+      const entries = fs.readdirSync(this.projectPath, { withFileTypes: true })
+      return entries
+        .filter((e) => e.isDirectory() && !this.isSystemFile(e.name))
+        .map((e) => e.name)
+        .sort()
+    } catch {
+      return []
+    }
   }
 
   checkProjectStructure(): string | null {

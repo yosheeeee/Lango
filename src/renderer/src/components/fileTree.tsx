@@ -1,21 +1,30 @@
+import type {
+  FileTreeGroup as FileTreeGroupType,
+  FileTreeItem as FileTreeItemType
+} from 'src/domain/models/fileTree'
 import { cn } from '@renderer/utils/cn'
 import { Slot } from '@radix-ui/react-slot'
 import { ComponentProps, FC, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { Folder, FolderOpen, LucideFileJson2, LucidePlus } from 'lucide-react'
+import {
+  FileJson2,
+  FileWarning,
+  Folder,
+  FolderOpen,
+  LucideFileJson2,
+  LucidePlus
+} from 'lucide-react'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './collapsible'
 
-export type FileTreeGroup = {
-  name: string
-  nestedItems: (FileTreeGroup | FileTreeItem)[]
-}
+export type FileTreeGroup = FileTreeGroupType
+export type FileTreeItem = FileTreeItemType
 
 export function FileTreeGroup({
   name,
   nestedItems,
   defaultOpen = false,
   depth = 0
-}: FileTreeGroup & { defaultOpen?: boolean; depth?: number }) {
+}: FileTreeGroupType & { defaultOpen?: boolean; depth?: number }) {
   const [open, setOpen] = useState(defaultOpen)
   const Icon = open ? FolderOpen : Folder
   return (
@@ -51,17 +60,20 @@ export function FileTreeGroup({
   )
 }
 
-type FileTreeItem = {
-  name: string
-  link: string
-}
-
-export function FileTreeItem({ name, link, depth = 0 }: FileTreeItem & { depth?: number }) {
+export function FileTreeItem({
+  name,
+  link,
+  depth = 0,
+  isOrphan
+}: FileTreeItemType & { depth?: number }) {
+  const FileIcon = isOrphan ? FileWarning : FileJson2
   return (
-    <TreeItem asChild data-tree-item="" data-tree-depth={depth}>
-      <NavLink to={link} className={'hover:underline gap-1'}>
-        <LucideFileJson2 className="size-[18px] text-" />
-        <span>{name}</span>
+    <TreeItem asChild data-tree-item="" data-tree-depth={depth} data-orphan={isOrphan || undefined}>
+      <NavLink to={link} className={'hover:underline gap-1 justify-between'}>
+        <div className="flex items-center gap-1">
+          <FileIcon className={cn('size-[18px]', { 'text-red-500': isOrphan })} />
+          <span>{name}</span>
+        </div>
       </NavLink>
     </TreeItem>
   )
