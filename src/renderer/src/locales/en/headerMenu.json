@@ -1,5 +1,6 @@
 {
   "exitProject": "Exit project",
   "onMaster": "Close left panel",
-  "offMaster": "Open left panel"
+  "offMaster": "Open left panel",
+  "openKeybinds": "Open Keybinds"
 }

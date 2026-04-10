@@ -8,7 +8,7 @@ import SessionSwitcher from './sessionSwitcher'
 
 export const EditorHeader: FC<ComponentProps<'header'>> = () => {
   return (
-    <header className="flex items-center justify-between py-1 px-3 border-b-gray-700 border-b">
+    <header className="flex items-center justify-between py-1 px-3 border-b-gray-700 border-b select-none">
       <HeaderGroup>
         <HeaderMenu />
         <SessionSwitcher />

@@ -5,7 +5,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@renderer/components/dropdown'
-import { useModulesVisibility } from '@renderer/providers/ModulesVisibilityProvider'
 import { useSessionStore } from '@renderer/stores/sessionStore'
 import { Menu } from 'lucide-react'
 import { FC } from 'react'

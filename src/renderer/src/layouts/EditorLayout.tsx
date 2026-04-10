@@ -1,3 +1,4 @@
+import { TooltipProvider } from '@renderer/components/tooltip'
 import KeybindsProvider from '@renderer/providers/KeybindsProvider'
 import { routerPaths } from '@renderer/router/routerPaths'
 import { useSessionStore } from '@renderer/stores/sessionStore'
@@ -16,7 +17,9 @@ export const EditorLayout: FC<PropsWithChildren> = ({ children }) => {
 
   return (
     <section className="flex flex-col w-full h-full">
-      <KeybindsProvider>{children}</KeybindsProvider>
+      <TooltipProvider>
+        <KeybindsProvider>{children}</KeybindsProvider>
+      </TooltipProvider>
     </section>
   )
 }
