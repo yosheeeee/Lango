@@ -1,7 +1,8 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/tooltip'
 import { useFileTreeStore } from '@renderer/stores/fileTreeStore'
+import { useLocalizationStore } from '@renderer/stores/localizationStore'
 import { cn } from '@renderer/utils/cn'
-import { File, FileWarning, Globe, KeyRound, LockKeyholeOpen } from 'lucide-react'
+import { File, FileWarning, Globe, LockKeyholeOpen } from 'lucide-react'
 import { ComponentProps, FC } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -15,9 +16,10 @@ export default function EditorFooter() {
 }
 
 function LocalizationGroup() {
+  const { locales } = useLocalizationStore()
   return (
     <FooterGroup>
-      <FooterFileTreeItem text={'Localizations'} Icon={Globe} count={0} />
+      <FooterFileTreeItem text={'Localizations'} Icon={Globe} count={locales?.length ?? 0} />
       <FooterFileTreeItem text={'Missing keys'} Icon={LockKeyholeOpen} count={0} />
     </FooterGroup>
   )

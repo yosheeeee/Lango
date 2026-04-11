@@ -2,14 +2,7 @@ import fs from 'fs'
 import { BrowserWindow } from 'electron'
 import { sessionService } from '../services/sessionService'
 
-const IGNORED_PATTERNS = [
-  '.DS_Store',
-  'Thumbs.db',
-  'desktop.ini',
-  '.git',
-  '.idea',
-  '.vscode'
-]
+const IGNORED_PATTERNS = ['.DS_Store', 'Thumbs.db', 'desktop.ini', '.git', '.idea', '.vscode']
 
 let watcher: fs.FSWatcher | null = null
 

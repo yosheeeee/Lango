@@ -1,13 +1,5 @@
 import { useSessionStore } from '@renderer/stores/sessionStore'
-import {
-  useState,
-  useEffect,
-  createContext,
-  useContext,
-  FC,
-  PropsWithChildren,
-  useCallback
-} from 'react'
+import { useEffect, createContext, useContext, FC, PropsWithChildren, useCallback } from 'react'
 import { Session } from 'src/domain/models/session'
 
 const projectsContext = createContext<ReturnType<typeof useProjectsContext> | null>(null)

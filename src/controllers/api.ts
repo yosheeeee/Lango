@@ -22,6 +22,7 @@ export const api: ControllerHandler = {
   },
   project: {
     getFileTree: () => ipcRenderer.invoke('project:getFileTree'),
-    stopWatcher: () => ipcRenderer.invoke('project:stopWatcher')
+    stopWatcher: () => ipcRenderer.invoke('project:stopWatcher'),
+    getLocaleFolders: () => ipcRenderer.invoke('project:getLocaleFolders')
   }
 }

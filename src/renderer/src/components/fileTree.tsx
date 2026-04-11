@@ -6,14 +6,7 @@ import { cn } from '@renderer/utils/cn'
 import { Slot } from '@radix-ui/react-slot'
 import { ComponentProps, FC, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import {
-  FileJson2,
-  FileWarning,
-  Folder,
-  FolderOpen,
-  LucideFileJson2,
-  LucidePlus
-} from 'lucide-react'
+import { FileJson2, FileWarning, Folder, FolderOpen, LucidePlus } from 'lucide-react'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './collapsible'
 
 export type FileTreeGroup = FileTreeGroupType

@@ -68,8 +68,12 @@ export class ProjectService {
       const meaningfulItems = entries.filter((item) => !this.isSystemFile(item.name))
 
       // Сначала папки, потом файлы (для удобства отображения)
-      const dirs = meaningfulItems.filter((i) => i.isDirectory()).sort((a, b) => a.name.localeCompare(b.name))
-      const files = meaningfulItems.filter((i) => i.isFile() && i.name.toLowerCase().endsWith('.json')).sort((a, b) => a.name.localeCompare(b.name))
+      const dirs = meaningfulItems
+        .filter((i) => i.isDirectory())
+        .sort((a, b) => a.name.localeCompare(b.name))
+      const files = meaningfulItems
+        .filter((i) => i.isFile() && i.name.toLowerCase().endsWith('.json'))
+        .sort((a, b) => a.name.localeCompare(b.name))
 
       for (const dir of dirs) {
         const subDirPath = path.join(dirPath, dir.name)
@@ -130,7 +134,7 @@ export class ProjectService {
   /**
    * Возвращает список папок первого уровня (локализаций), исключая системные.
    */
-  private getLocaleFolders(): string[] {
+  getLocaleFolders(): string[] {
     try {
       const entries = fs.readdirSync(this.projectPath, { withFileTypes: true })
       return entries

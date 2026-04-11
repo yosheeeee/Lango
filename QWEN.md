@@ -41,22 +41,22 @@ src/
 
 ## Tech Stack
 
-| Category        | Technology                              |
-|-----------------|-----------------------------------------|
-| Framework       | Electron 39 + electron-vite 5           |
-| UI              | React 19 + TypeScript 5                 |
-| Styling         | Tailwind CSS v4 + Radix UI              |
-| Icons           | Lucide React                            |
-| Font            | Geist (via @fontsource)                 |
-| Routing         | React Router v7                         |
-| State           | Zustand                                 |
-| i18n            | i18next + react-i18next                 |
-| Forms           | React Hook Form + Zod v4                |
-| Storage         | electron-store                          |
-| Updates         | electron-updater                        |
-| Testing         | Vitest + Testing Library + jsdom        |
-| Linting         | ESLint 9 (flat config)                  |
-| Formatting      | Prettier                                |
+| Category   | Technology                       |
+| ---------- | -------------------------------- |
+| Framework  | Electron 39 + electron-vite 5    |
+| UI         | React 19 + TypeScript 5          |
+| Styling    | Tailwind CSS v4 + Radix UI       |
+| Icons      | Lucide React                     |
+| Font       | Geist (via @fontsource)          |
+| Routing    | React Router v7                  |
+| State      | Zustand                          |
+| i18n       | i18next + react-i18next          |
+| Forms      | React Hook Form + Zod v4         |
+| Storage    | electron-store                   |
+| Updates    | electron-updater                 |
+| Testing    | Vitest + Testing Library + jsdom |
+| Linting    | ESLint 9 (flat config)           |
+| Formatting | Prettier                         |
 
 ## Building and Running
 
@@ -133,12 +133,12 @@ yarn build:linux  # Linux
 
 ### Key Files
 
-| File | Purpose |
-|------|---------|
-| `src/main/index.ts` | Electron main process entry point |
-| `src/renderer/src/main.tsx` | React app entry point |
-| `src/domain/store.ts` | electron-store configuration |
-| `src/domain/models/` | TypeScript type definitions |
-| `src/renderer/src/utils/i18n.ts` | i18n initialization |
-| `src/renderer/src/router/` | Application routing |
-| `electron.vite.config.ts` | Vite build configuration with Tailwind |
+| File                             | Purpose                                |
+| -------------------------------- | -------------------------------------- |
+| `src/main/index.ts`              | Electron main process entry point      |
+| `src/renderer/src/main.tsx`      | React app entry point                  |
+| `src/domain/store.ts`            | electron-store configuration           |
+| `src/domain/models/`             | TypeScript type definitions            |
+| `src/renderer/src/utils/i18n.ts` | i18n initialization                    |
+| `src/renderer/src/router/`       | Application routing                    |
+| `electron.vite.config.ts`        | Vite build configuration with Tailwind |

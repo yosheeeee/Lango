@@ -3,6 +3,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup
 } from '@renderer/components/resizable'
+import ProjectLocalizations from '@renderer/modules/editor/projectLocalizations'
 import ProjectTree from '@renderer/modules/editor/projectTree'
 import { useEditorStore } from '@renderer/stores/visibilityStore'
 import { cn } from '@renderer/utils/cn'
@@ -22,9 +23,7 @@ const MasterLayout: FC<MasterLayoutProps> = () => {
             <ProjectTree />
           </ResizablePanel>
           <ResizableHandle />
-          <ResizablePanel defaultSize={'30%'} minSize={'100px'}>
-            <p>Localizations</p>
-          </ResizablePanel>
+          <ProjectLocalizations />
         </ResizablePanelGroup>
       </ResizablePanel>
       <ResizableHandle className={hiddenClassName} />

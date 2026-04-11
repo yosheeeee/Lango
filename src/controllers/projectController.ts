@@ -21,11 +21,20 @@ ipcMain.handle('project:stopWatcher', () => {
   return true
 })
 
+// Получить список локализаций текущего проекта
+ipcMain.handle('project:getLocaleFolders', () => {
+  const session = sessionService.getCurrentSession()
+  if (!session) return []
+  const projectService = new ProjectService(session.path)
+  return projectService.getLocaleFolders()
+})
+
 type Service = typeof projectServiceStub
 
 const projectServiceStub = {
   getFileTree: () => null as unknown as ReturnType<ProjectService['getFileTree']>,
-  stopWatcher: () => true
+  stopWatcher: () => true,
+  getLocaleFolders: () => [] as unknown as ReturnType<ProjectService['getLocaleFolders']>
 }
 
 export type ProjectHandler = GenericControllerHandler<Service>

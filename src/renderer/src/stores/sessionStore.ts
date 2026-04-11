@@ -1,7 +1,5 @@
 import { Session } from 'src/domain/models/session'
 import { create } from 'zustand'
-import { createJSONStorage } from 'zustand/middleware'
-import { persist } from 'zustand/middleware'
 
 type SessionState = {
   currentSession: Session | null
@@ -9,7 +7,7 @@ type SessionState = {
 }
 
 type SessionAcitons = {
-  setSessions: (sessions: Session[]) => void
+  setSessions: (sessions: Session[] | ((prev: Session[]) => Session[])) => void
   setSession: (session: Session) => void
   clearSession: () => void
   clearState: () => void
@@ -22,10 +20,13 @@ const initialState: SessionState = {
   sessions: window.sessions
 }
 
-export const useSessionStore = create<SessionStore>()((set, get) => ({
+export const useSessionStore = create<SessionStore>()((set) => ({
   ...initialState,
   setSession: (session) => set({ currentSession: session }),
-  setSessions: (sessions) => set({ sessions }),
+  setSessions: (sessions) =>
+    set((prev) => ({
+      sessions: typeof sessions === 'function' ? sessions(prev.sessions ?? []) : sessions
+    })),
   clearState: () => set({ ...initialState }),
   clearSession: () => set({ currentSession: null })
 }))

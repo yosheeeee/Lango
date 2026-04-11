@@ -4,8 +4,8 @@ import { create } from 'zustand'
 type VisibilityState = {
   cheetSheet: boolean
   masterPanel: boolean
-  searchRef: RefObject<HTMLInputElement>
-  projectTreeRef: RefObject<HTMLDivElement>
+  searchRef: RefObject<HTMLInputElement | null>
+  projectTreeRef: RefObject<HTMLDivElement | null>
 }
 
 type VisibilityActions = {
@@ -19,8 +19,8 @@ type VisibilityStore = VisibilityState & VisibilityActions
 export const useEditorStore = create<VisibilityStore>()((set, get) => ({
   cheetSheet: false,
   masterPanel: true,
-  searchRef: React.createRef<HTMLInputElement>(null),
-  projectTreeRef: React.createRef<HTMLDivElement>(null),
+  searchRef: React.createRef<HTMLInputElement>(),
+  projectTreeRef: React.createRef<HTMLDivElement>(),
   toggleMaster: () => {
     let newState = false
     set((prev) => {

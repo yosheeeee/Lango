@@ -25,8 +25,8 @@ export default function SessionSwitcher() {
           <div
             className={cn(
               '!py-0.5 !px-1.5 rounded-md text-sm cursor-pointer flex items-center gap-2',
-              projectColors[currentSession?.color]?.base,
-              projectColors[currentSession?.color]?.hover
+              currentSession ? projectColors[currentSession.color]?.base : undefined,
+              currentSession ? projectColors[currentSession.color]?.hover : undefined
             )}
           >
             {currentSession?.name}
@@ -34,19 +34,17 @@ export default function SessionSwitcher() {
           </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          {sessions
-            // ?.filter((s) => s.id != currentSession?.id)
-            .map((s) => (
-              <DropdownMenuItem
-                key={s.id}
-                onClick={() => setSession(s)}
-                className={
-                  (cn(projectColors[s.color].base, projectColors[s.color].hover), 'cursor-pointer')
-                }
-              >
-                {s.name}
-              </DropdownMenuItem>
-            ))}
+          {sessions?.map((s) => (
+            <DropdownMenuItem
+              key={s.id}
+              onClick={() => setSession(s)}
+              className={
+                (cn(projectColors[s.color].base, projectColors[s.color].hover), 'cursor-pointer')
+              }
+            >
+              {s.name}
+            </DropdownMenuItem>
+          ))}
           <AddNewProjectModal onAdded={onAdded}>
             <Button size={'sm'}>
               <Plus /> Add new project

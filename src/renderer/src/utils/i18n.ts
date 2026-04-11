@@ -16,7 +16,6 @@ i18n
     lng: window.currentLanguage || 'ru', // Use lng instead of just fallbackLng to set the initial language
     fallbackLng: 'ru',
     defaultNS: 'projectSelect',
-    debug: true, // Enable debug mode to see what's happening
     react: {
       useSuspense: false
     },

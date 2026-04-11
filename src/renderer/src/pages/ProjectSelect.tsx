@@ -31,7 +31,7 @@ function PageContent(): React.JSX.Element {
       <main className="flex-1 h-full  flex flex-col items-center justify-center gap-5 w-full max-w-md mx-auto">
         <h1 className="text-4xl">{t('title')}</h1>
         <div className="flex flex-col gap-3 w-full">
-          {projects.length ? (
+          {projects?.length ? (
             projects.map((p) => <Project {...p} key={p.id} />)
           ) : (
             <p className="text-center font-[500]">{t('noProject')}</p>
