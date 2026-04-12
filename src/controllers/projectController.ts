@@ -9,10 +9,10 @@ ipcMain.handle('project:getFileTree', () => {
   const session = sessionService.getCurrentSession()
   if (!session) return null
   const projectService = new ProjectService(session.path)
-  const tree = projectService.getFileTree()
+  const treeData = projectService.getFileTree(session.name)
   // Запускаем watcher при запросе дерева
   startFileWatcher()
-  return tree
+  return treeData
 })
 
 // Остановить watcher (вызывается при смене сессии или закрытии)
@@ -32,7 +32,7 @@ ipcMain.handle('project:getLocaleFolders', () => {
 type Service = typeof projectServiceStub
 
 const projectServiceStub = {
-  getFileTree: () => null as unknown as ReturnType<ProjectService['getFileTree']>,
+  getFileTree: () => null as unknown as ReturnType<ProjectService['getFileTree']> | null,
   stopWatcher: () => true,
   getLocaleFolders: () => [] as unknown as ReturnType<ProjectService['getLocaleFolders']>
 }

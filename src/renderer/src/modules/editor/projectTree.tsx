@@ -14,7 +14,7 @@ function getVisibleItems(container: HTMLElement): HTMLElement[] {
 export default function ProjectTree() {
   const { projectTreeRef: ref } = useEditorStore()
   const { currentSession } = useSessionStore()
-  const { tree, isLoading, fetchTree, invalidateTree } = useFileTreeStore()
+  const { root, isLoading, fetchTree, invalidateTree } = useFileTreeStore()
 
   // Загрузка дерева при маунте и при смене сессии
   useEffect(() => {
@@ -118,7 +118,7 @@ export default function ProjectTree() {
     })
 
     return unsubscribe
-  }, [tree])
+  }, [root])
 
   if (!currentSession) {
     return (
@@ -133,7 +133,7 @@ export default function ProjectTree() {
     )
   }
 
-  if (isLoading && !tree) {
+  if (isLoading && !root) {
     return (
       <section
         ref={ref}
@@ -146,7 +146,7 @@ export default function ProjectTree() {
     )
   }
 
-  if (!tree || tree.length === 0) {
+  if (!root || root.nestedItems.length === 0) {
     return (
       <section
         ref={ref}
@@ -172,9 +172,7 @@ export default function ProjectTree() {
       }}
     >
       <div className="flex flex-col gap-1 w-full">
-        {tree.map((locale) => (
-          <FileTreeGroup key={locale.name} {...locale} defaultOpen={true} />
-        ))}
+        <FileTreeGroup {...root} defaultOpen={true} />
       </div>
     </section>
   )

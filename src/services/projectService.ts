@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { CheckProjectStructureErrors } from '../domain/models/errors'
-import { FileTreeGroup, FileTreeItem } from '../domain/models/fileTree'
+import { FileTreeData, FileTreeGroup, FileTreeItem } from '../domain/models/fileTree'
 
 export class ProjectService {
   private projectPath: string
@@ -11,14 +11,13 @@ export class ProjectService {
   }
 
   /**
-   * Строит дерево файлов проекта с перекрёстной проверкой сирот.
-   * Папки первого уровня считаются локализациями.
-   * Файл помечается как isOrphan, если он присутствует НЕ во всех локализациях.
+   * Строит унифицированное дерево файлов: каждый файл приходит 1 раз
+   * с указанием локалей и флагом isOrphan если присутствует не везде.
    */
-  getFileTree(): FileTreeGroup[] {
+  getFileTree(projectName: string): FileTreeData {
     try {
       const locales = this.getLocaleFolders()
-      if (locales.length === 0) return []
+      if (locales.length === 0) return { root: { name: projectName, nestedItems: [] }, locales: [] }
 
       // Собираем все уникальные относительные пути файлов across all locales
       const allFilePaths = new Map<string, Set<string>>() // relativePath -> Set<locale>
@@ -34,76 +33,78 @@ export class ProjectService {
         }
       }
 
-      // Определяем сироты ли: файл есть не во всех локализациях
-      const isOrphan = (relativePath: string): boolean => {
-        const localesWithFile = allFilePaths.get(relativePath)
-        return localesWithFile ? localesWithFile.size !== locales.length : false
-      }
+      const nestedItems = this.buildUnifiedTree(allFilePaths, locales)
+      const root: FileTreeGroup = { name: projectName, nestedItems }
 
-      // Строим дерево
-      const tree: FileTreeGroup[] = locales.map((locale) => {
-        const localePath = path.join(this.projectPath, locale)
-        const nestedItems = this.buildTreeItems(localePath, '', isOrphan)
-        return { name: locale, nestedItems }
-      })
-
-      return tree
+      return { root, locales }
     } catch {
-      return []
+      return { root: { name: projectName, nestedItems: [] }, locales: [] }
     }
   }
 
   /**
-   * Рекурсивно собирает .json файлы и строит дерево элементов.
+   * Строит единое дерево из плоской карты путей файлов.
    */
-  private buildTreeItems(
-    dirPath: string,
-    relativeDir: string,
-    isOrphanCheck: (relativePath: string) => boolean
+  private buildUnifiedTree(
+    allFilePaths: Map<string, Set<string>>,
+    allLocales: string[]
   ): (FileTreeGroup | FileTreeItem)[] {
-    const items: (FileTreeGroup | FileTreeItem)[] = []
+    type DirNode = {
+      dirs: Map<string, DirNode>
+      files: Map<string, Set<string>>
+    }
 
-    try {
-      const entries = fs.readdirSync(dirPath, { withFileTypes: true })
-      const meaningfulItems = entries.filter((item) => !this.isSystemFile(item.name))
+    const root: DirNode = { dirs: new Map(), files: new Map() }
 
-      // Сначала папки, потом файлы (для удобства отображения)
-      const dirs = meaningfulItems
-        .filter((i) => i.isDirectory())
-        .sort((a, b) => a.name.localeCompare(b.name))
-      const files = meaningfulItems
-        .filter((i) => i.isFile() && i.name.toLowerCase().endsWith('.json'))
-        .sort((a, b) => a.name.localeCompare(b.name))
+    for (const [relativePath, localesSet] of allFilePaths) {
+      const parts = relativePath.split('/')
+      let node = root
+      for (let i = 0; i < parts.length - 1; i++) {
+        const dir = parts[i]
+        if (!node.dirs.has(dir)) {
+          node.dirs.set(dir, { dirs: new Map(), files: new Map() })
+        }
+        node = node.dirs.get(dir)!
+      }
+      node.files.set(parts[parts.length - 1], localesSet)
+    }
 
-      for (const dir of dirs) {
-        const subDirPath = path.join(dirPath, dir.name)
-        const subRelativeDir = relativeDir ? `${relativeDir}/${dir.name}` : dir.name
-        const nestedItems = this.buildTreeItems(subDirPath, subRelativeDir, isOrphanCheck)
+    const buildItems = (
+      node: DirNode,
+      relativeDir: string
+    ): (FileTreeGroup | FileTreeItem)[] => {
+      const items: (FileTreeGroup | FileTreeItem)[] = []
 
-        // Папка — сирота, если хотя бы один её элемент — сирота
+      const sortedDirs = [...node.dirs.entries()].sort(([a], [b]) => a.localeCompare(b))
+      for (const [dirName, dirNode] of sortedDirs) {
+        const subRelativeDir = relativeDir ? `${relativeDir}/${dirName}` : dirName
+        const nestedItems = buildItems(dirNode, subRelativeDir)
         const hasOrphan = nestedItems.some((item) => 'isOrphan' in item && item.isOrphan)
-
         items.push({
-          name: dir.name,
+          name: dirName,
           nestedItems,
           isOrphan: hasOrphan || undefined
         })
       }
 
-      for (const file of files) {
-        const relativePath = relativeDir ? `${relativeDir}/${file.name}` : file.name
-        const nameWithoutExt = file.name.replace(/\.json$/i, '')
+      const sortedFiles = [...node.files.entries()].sort(([a], [b]) => a.localeCompare(b))
+      for (const [filename, localesSet] of sortedFiles) {
+        const nameWithoutExt = filename.replace(/\.json$/i, '')
+        const link = relativeDir ? `/${relativeDir}/${nameWithoutExt}` : `/${nameWithoutExt}`
+        const fileLocales = [...localesSet].sort()
+        const isOrphan = localesSet.size < allLocales.length
         items.push({
           name: nameWithoutExt,
-          link: `/${relativeDir}/${nameWithoutExt}`.replace('//', '/'),
-          isOrphan: isOrphanCheck(relativePath) || undefined
+          link,
+          locales: fileLocales,
+          isOrphan: isOrphan || undefined
         })
       }
-    } catch {
-      // ignore
+
+      return items
     }
 
-    return items
+    return buildItems(root, '')
   }
 
   /**

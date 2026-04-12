@@ -2,7 +2,8 @@ import { create } from 'zustand'
 import { FileTreeGroup, FileTreeItem } from 'src/domain/models/fileTree'
 
 type FileTreeState = {
-  tree: FileTreeGroup[] | null
+  root: FileTreeGroup | null
+  locales: string[]
   totalFiles: number
   orphanFiles: number
   isLoading: boolean
@@ -37,7 +38,8 @@ function countFiles(items: (FileTreeGroup | FileTreeItem)[]): { total: number; o
 }
 
 const initialState: FileTreeState = {
-  tree: null,
+  root: null,
+  locales: [],
   totalFiles: 0,
   orphanFiles: 0,
   isLoading: false
@@ -49,16 +51,16 @@ export const useFileTreeStore = create<FileTreeStore>()((set) => ({
   fetchTree: async () => {
     set({ isLoading: true })
     try {
-      const tree = await window.api.project.getFileTree()
-      if (tree && tree.length > 0) {
-        const { total, orphans } = countFiles(tree.flatMap((t) => t.nestedItems))
-        set({ tree, totalFiles: total, orphanFiles: orphans })
+      const data = await window.api.project.getFileTree()
+      if (data) {
+        const { total, orphans } = countFiles(data.root.nestedItems)
+        set({ root: data.root, locales: data.locales, totalFiles: total, orphanFiles: orphans })
       } else {
-        set({ tree: tree ?? null, totalFiles: 0, orphanFiles: 0 })
+        set({ root: null, locales: [], totalFiles: 0, orphanFiles: 0 })
       }
     } catch (e) {
       console.error('Failed to fetch file tree:', e)
-      set({ tree: null, totalFiles: 0, orphanFiles: 0 })
+      set({ root: null, locales: [], totalFiles: 0, orphanFiles: 0 })
     } finally {
       set({ isLoading: false })
     }
@@ -67,12 +69,12 @@ export const useFileTreeStore = create<FileTreeStore>()((set) => ({
   invalidateTree: async () => {
     set({ isLoading: true })
     try {
-      const tree = await window.api.project.getFileTree()
-      if (tree && tree.length > 0) {
-        const { total, orphans } = countFiles(tree.flatMap((t) => t.nestedItems))
-        set({ tree, totalFiles: total, orphanFiles: orphans })
+      const data = await window.api.project.getFileTree()
+      if (data) {
+        const { total, orphans } = countFiles(data.root.nestedItems)
+        set({ root: data.root, locales: data.locales, totalFiles: total, orphanFiles: orphans })
       } else {
-        set({ tree: tree ?? null, totalFiles: 0, orphanFiles: 0 })
+        set({ root: null, locales: [], totalFiles: 0, orphanFiles: 0 })
       }
     } catch (e) {
       console.error('Failed to invalidate file tree:', e)

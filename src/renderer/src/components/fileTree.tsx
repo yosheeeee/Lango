@@ -57,7 +57,8 @@ export function FileTreeItem({
   name,
   link,
   depth = 0,
-  isOrphan
+  isOrphan,
+  locales: _locales
 }: FileTreeItemType & { depth?: number }) {
   const FileIcon = isOrphan ? FileWarning : FileJson2
   return (
