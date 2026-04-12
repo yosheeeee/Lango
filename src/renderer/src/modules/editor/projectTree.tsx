@@ -39,17 +39,21 @@ export default function ProjectTree() {
     const active = () => document.activeElement as HTMLElement
     const items = () => getVisibleItems(el)
     const idx = () => items().indexOf(active())
+    const isInput = () => document.activeElement instanceof HTMLInputElement
 
     const unsubscribe = tinykeys(el, {
       ArrowDown: (e) => {
+        if (isInput()) return
         e.preventDefault()
         items()[idx() + 1]?.focus()
       },
       ArrowUp: (e) => {
+        if (isInput()) return
         e.preventDefault()
         items()[Math.max(0, idx() - 1)]?.focus()
       },
       ArrowRight: (e) => {
+        if (isInput()) return
         e.preventDefault()
         const node = active()
         if (!node?.hasAttribute('data-tree-folder')) return
@@ -60,6 +64,7 @@ export default function ProjectTree() {
         }
       },
       ArrowLeft: (e) => {
+        if (isInput()) return
         e.preventDefault()
         const node = active()
         if (node?.hasAttribute('data-tree-folder') && node.getAttribute('data-state') === 'open') {
@@ -79,14 +84,17 @@ export default function ProjectTree() {
         }
       },
       KeyJ: (e) => {
+        if (isInput()) return
         e.preventDefault()
         items()[idx() + 1]?.focus()
       },
       KeyK: (e) => {
+        if (isInput()) return
         e.preventDefault()
         items()[Math.max(0, idx() - 1)]?.focus()
       },
       KeyL: (e) => {
+        if (isInput()) return
         e.preventDefault()
         const node = active()
         if (!node?.hasAttribute('data-tree-folder')) return
@@ -97,6 +105,7 @@ export default function ProjectTree() {
         }
       },
       KeyH: (e) => {
+        if (isInput()) return
         e.preventDefault()
         const node = active()
         if (node?.hasAttribute('data-tree-folder') && node.getAttribute('data-state') === 'open') {
@@ -172,7 +181,7 @@ export default function ProjectTree() {
       }}
     >
       <div className="flex flex-col gap-1 w-full">
-        <FileTreeGroup {...root} defaultOpen={true} />
+        <FileTreeGroup {...root} defaultOpen={true} folderPath="" />
       </div>
     </section>
   )

@@ -21,6 +21,7 @@ export class ProjectService {
 
       // Собираем все уникальные относительные пути файлов across all locales
       const allFilePaths = new Map<string, Set<string>>() // relativePath -> Set<locale>
+      const allDirPaths = new Map<string, Set<string>>() // dirPath -> Set<locale>
 
       for (const locale of locales) {
         const localePath = path.join(this.projectPath, locale)
@@ -31,9 +32,16 @@ export class ProjectService {
           }
           allFilePaths.get(filePath)!.add(locale)
         }
+        const dirs = this.collectDirectories(localePath, '')
+        for (const dirPath of dirs) {
+          if (!allDirPaths.has(dirPath)) {
+            allDirPaths.set(dirPath, new Set())
+          }
+          allDirPaths.get(dirPath)!.add(locale)
+        }
       }
 
-      const nestedItems = this.buildUnifiedTree(allFilePaths, locales)
+      const nestedItems = this.buildUnifiedTree(allFilePaths, allDirPaths, locales)
       const root: FileTreeGroup = { name: projectName, nestedItems }
 
       return { root, locales }
@@ -47,6 +55,7 @@ export class ProjectService {
    */
   private buildUnifiedTree(
     allFilePaths: Map<string, Set<string>>,
+    allDirPaths: Map<string, Set<string>>,
     allLocales: string[]
   ): (FileTreeGroup | FileTreeItem)[] {
     type DirNode = {
@@ -67,6 +76,18 @@ export class ProjectService {
         node = node.dirs.get(dir)!
       }
       node.files.set(parts[parts.length - 1], localesSet)
+    }
+
+    // Добавляем пустые папки, которые не содержат файлов
+    for (const [dirPath] of allDirPaths) {
+      const parts = dirPath.split('/')
+      let node = root
+      for (const part of parts) {
+        if (!node.dirs.has(part)) {
+          node.dirs.set(part, { dirs: new Map(), files: new Map() })
+        }
+        node = node.dirs.get(part)!
+      }
     }
 
     const buildItems = (
@@ -108,6 +129,26 @@ export class ProjectService {
   }
 
   /**
+   * Рекурсивно собирает все поддиректории (для отображения пустых папок).
+   */
+  private collectDirectories(dirPath: string, relativeDir: string): string[] {
+    const dirs: string[] = []
+    try {
+      const entries = fs.readdirSync(dirPath, { withFileTypes: true })
+      for (const item of entries.filter((e) => !this.isSystemFile(e.name))) {
+        if (item.isDirectory()) {
+          const sub = relativeDir ? `${relativeDir}/${item.name}` : item.name
+          dirs.push(sub)
+          dirs.push(...this.collectDirectories(path.join(dirPath, item.name), sub))
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return dirs
+  }
+
+  /**
    * Рекурсивно собирает все .json файлы в директории (для проверки сирот).
    */
   private collectJsonFiles(dirPath: string, relativeDir: string): string[] {
@@ -130,6 +171,69 @@ export class ProjectService {
       // ignore
     }
     return files
+  }
+
+  /**
+   * Создаёт пустой JSON-неймспейс во всех папках локализаций.
+   * namespacePath — относительный путь без расширения, например "common" или "auth/login"
+   */
+  createNamespace(namespacePath: string): void {
+    const locales = this.getLocaleFolders()
+    if (locales.length === 0) throw new Error('No locale folders found')
+
+    for (const locale of locales) {
+      const filePath = path.join(this.projectPath, locale, `${namespacePath}.json`)
+      fs.mkdirSync(path.dirname(filePath), { recursive: true })
+      if (!fs.existsSync(filePath)) {
+        fs.writeFileSync(filePath, '{}', 'utf-8')
+      }
+    }
+  }
+
+  /**
+   * Удаляет .json файл неймспейса из всех папок локализаций.
+   * namespacePath — относительный путь без расширения, например "common" или "auth/login"
+   */
+  deleteNamespace(namespacePath: string): void {
+    const locales = this.getLocaleFolders()
+    for (const locale of locales) {
+      const filePath = path.join(this.projectPath, locale, `${namespacePath}.json`)
+      try {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath)
+        }
+      } catch {
+        // ignore missing files
+      }
+    }
+  }
+
+  /**
+   * Создаёт папку во всех папках локализаций.
+   * folderPath — относительный путь, например "auth" или "auth/sub"
+   */
+  deleteFolder(folderPath: string): void {
+    const locales = this.getLocaleFolders()
+    for (const locale of locales) {
+      const dirPath = path.join(this.projectPath, locale, folderPath)
+      try {
+        if (fs.existsSync(dirPath)) {
+          fs.rmSync(dirPath, { recursive: true })
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  createFolder(folderPath: string): void {
+    const locales = this.getLocaleFolders()
+    if (locales.length === 0) throw new Error('No locale folders found')
+
+    for (const locale of locales) {
+      const dirPath = path.join(this.projectPath, locale, folderPath)
+      fs.mkdirSync(dirPath, { recursive: true })
+    }
   }
 
   /**

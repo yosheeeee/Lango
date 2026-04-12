@@ -1,3 +1,17 @@
 {
-  "welcomeMessage": "Добро пожаловать в редактор"
+  "welcomeMessage": "Добро пожаловать в редактор",
+  "fileTree": {
+    "newFile": "Новый файл",
+    "newFolder": "Новая папка",
+    "filenamePlaceholder": "название файла",
+    "folderNamePlaceholder": "название папки",
+    "deleteNamespace": {
+      "title": "Удалить неймспейс",
+      "description": "Вы уверены, что хотите удалить «{{name}}»? Файл будет удалён из всех локализаций."
+    },
+    "deleteFolder": {
+      "title": "Удалить папку",
+      "description": "Вы уверены, что хотите удалить «{{name}}»? Все файлы внутри будут удалены из всех локализаций."
+    }
+  }
 }

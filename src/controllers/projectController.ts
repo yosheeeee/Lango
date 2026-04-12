@@ -29,12 +29,52 @@ ipcMain.handle('project:getLocaleFolders', () => {
   return projectService.getLocaleFolders()
 })
 
+// Создать неймспейс (пустой .json файл) во всех локализациях
+ipcMain.handle('project:createNamespace', (_, namespacePath: string) => {
+  const session = sessionService.getCurrentSession()
+  if (!session) throw new Error('No active session')
+  const projectService = new ProjectService(session.path)
+  projectService.createNamespace(namespacePath)
+  return true
+})
+
+// Удалить неймспейс из всех локализаций
+ipcMain.handle('project:deleteNamespace', (_, namespacePath: string) => {
+  const session = sessionService.getCurrentSession()
+  if (!session) throw new Error('No active session')
+  const projectService = new ProjectService(session.path)
+  projectService.deleteNamespace(namespacePath)
+  return true
+})
+
+// Удалить папку из всех локализаций
+ipcMain.handle('project:deleteFolder', (_, folderPath: string) => {
+  const session = sessionService.getCurrentSession()
+  if (!session) throw new Error('No active session')
+  const projectService = new ProjectService(session.path)
+  projectService.deleteFolder(folderPath)
+  return true
+})
+
+// Создать папку во всех локализациях
+ipcMain.handle('project:createFolder', (_, folderPath: string) => {
+  const session = sessionService.getCurrentSession()
+  if (!session) throw new Error('No active session')
+  const projectService = new ProjectService(session.path)
+  projectService.createFolder(folderPath)
+  return true
+})
+
 type Service = typeof projectServiceStub
 
 const projectServiceStub = {
   getFileTree: () => null as unknown as ReturnType<ProjectService['getFileTree']> | null,
   stopWatcher: () => true,
-  getLocaleFolders: () => [] as unknown as ReturnType<ProjectService['getLocaleFolders']>
+  getLocaleFolders: () => [] as unknown as ReturnType<ProjectService['getLocaleFolders']>,
+  createNamespace: (_namespacePath: string) => true,
+  deleteNamespace: (_namespacePath: string) => true,
+  createFolder: (_folderPath: string) => true,
+  deleteFolder: (_folderPath: string) => true
 }
 
 export type ProjectHandler = GenericControllerHandler<Service>

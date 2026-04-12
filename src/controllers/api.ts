@@ -23,6 +23,12 @@ export const api: ControllerHandler = {
   project: {
     getFileTree: () => ipcRenderer.invoke('project:getFileTree'),
     stopWatcher: () => ipcRenderer.invoke('project:stopWatcher'),
-    getLocaleFolders: () => ipcRenderer.invoke('project:getLocaleFolders')
+    getLocaleFolders: () => ipcRenderer.invoke('project:getLocaleFolders'),
+    createNamespace: (namespacePath: string) =>
+      ipcRenderer.invoke('project:createNamespace', namespacePath),
+    deleteNamespace: (namespacePath: string) =>
+      ipcRenderer.invoke('project:deleteNamespace', namespacePath),
+    createFolder: (folderPath: string) => ipcRenderer.invoke('project:createFolder', folderPath),
+    deleteFolder: (folderPath: string) => ipcRenderer.invoke('project:deleteFolder', folderPath)
   }
 }

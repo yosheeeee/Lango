@@ -1,3 +1,17 @@
 {
-  "welcomeMessage": "Welcome to the editor"
+  "welcomeMessage": "Welcome to the editor",
+  "fileTree": {
+    "newFile": "New file",
+    "newFolder": "New folder",
+    "filenamePlaceholder": "filename",
+    "folderNamePlaceholder": "folder name",
+    "deleteNamespace": {
+      "title": "Delete namespace",
+      "description": "Are you sure you want to delete «{{name}}»? The file will be removed from all locales."
+    },
+    "deleteFolder": {
+      "title": "Delete folder",
+      "description": "Are you sure you want to delete «{{name}}»? All files inside will be removed from all locales."
+    }
+  }
 }
