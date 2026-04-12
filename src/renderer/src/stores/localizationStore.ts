@@ -8,6 +8,7 @@ type LocalizationState = {
 type LocalizationActions = {
   fetchLocales: () => Promise<void>
   addLocale: (localeName: string) => Promise<void>
+  deleteLocale: (localeName: string) => Promise<void>
 }
 
 type LocalizationStore = LocalizationState & LocalizationActions
@@ -35,5 +36,10 @@ export const useLocalizationStore = create<LocalizationStore>()((set) => ({
   addLocale: async (localeName: string) => {
     await window.api.project.createLocale(localeName)
     set((state) => ({ locales: [...state.locales, localeName].sort() }))
+  },
+
+  deleteLocale: async (localeName: string) => {
+    await window.api.project.deleteLocale(localeName)
+    set((state) => ({ locales: state.locales.filter((l) => l !== localeName) }))
   }
 }))

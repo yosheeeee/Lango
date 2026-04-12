@@ -74,6 +74,15 @@ ipcMain.handle('project:createLocale', (_, localeName: string) => {
   return true
 })
 
+// Удалить локаль
+ipcMain.handle('project:deleteLocale', (_, localeName: string) => {
+  const session = sessionService.getCurrentSession()
+  if (!session) throw new Error('No active session')
+  const projectService = new ProjectService(session.path)
+  projectService.deleteLocale(localeName)
+  return true
+})
+
 type Service = typeof projectServiceStub
 
 const projectServiceStub = {
@@ -84,7 +93,8 @@ const projectServiceStub = {
   deleteNamespace: (_namespacePath: string) => true,
   createFolder: (_folderPath: string) => true,
   deleteFolder: (_folderPath: string) => true,
-  createLocale: (_localeName: string) => true
+  createLocale: (_localeName: string) => true,
+  deleteLocale: (_localeName: string) => true
 }
 
 export type ProjectHandler = GenericControllerHandler<Service>

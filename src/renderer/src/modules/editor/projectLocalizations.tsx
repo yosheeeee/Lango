@@ -4,12 +4,23 @@ import { ResizablePanel } from '@renderer/components/resizable'
 import { useSessionStore } from '@renderer/stores/sessionStore'
 import { useLocalizationStore } from '@renderer/stores/localizationStore'
 import { useTranslation } from 'react-i18next'
-import { Globe, Plus } from 'lucide-react'
+import { Globe, Plus, Trash2 } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogClose
+} from '@renderer/components/dialog'
+import { Button } from '@renderer/components/button'
 
 export default function ProjectLocalizations() {
   const { currentSession } = useSessionStore()
-  const { locales, isLoading, fetchLocales, addLocale } = useLocalizationStore()
+  const { locales, isLoading, fetchLocales, addLocale, deleteLocale } = useLocalizationStore()
   const { t } = useTranslation('master')
+  const { t: tCommon } = useTranslation('common')
   const [isCreating, setIsCreating] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -97,7 +108,12 @@ export default function ProjectLocalizations() {
             </div>
           )}
           {locales.map((locale) => (
-            <LocalizationNode key={locale} name={locale} />
+            <LocalizationNode
+              key={locale}
+              name={locale}
+              canDelete={locales.length > 1}
+              onDelete={deleteLocale}
+            />
           ))}
         </div>
       </div>
@@ -105,11 +121,60 @@ export default function ProjectLocalizations() {
   )
 }
 
-function LocalizationNode({ name }: { name: string }) {
+function LocalizationNode({
+  name,
+  canDelete,
+  onDelete
+}: {
+  name: string
+  canDelete: boolean
+  onDelete: (name: string) => void
+}) {
+  const { t } = useTranslation('master')
+  const { t: tCommon } = useTranslation('common')
+  const [confirmOpen, setConfirmOpen] = useState(false)
+
+  const handleDelete = async () => {
+    await onDelete(name)
+    setConfirmOpen(false)
+  }
+
   return (
-    <div className="flex items-center gap-2 py-1 px-2">
-      <LocaleIcon locale={name} className="size-[20px] rounded-md" />
-      <p>{name}</p>
-    </div>
+    <>
+      <div className="flex items-center gap-2 py-1 px-2 group justify-between">
+        <div className="flex items-center gap-2">
+          <LocaleIcon locale={name} className="size-[20px] rounded-md" />
+          <p>{name}</p>
+        </div>
+        {canDelete && (
+          <button
+            data-delete-btn=""
+            className="opacity-0 group-hover:opacity-100 flex items-center [&>svg]:size-[14px] text-gray-400 hover:text-red-400"
+            onClick={() => setConfirmOpen(true)}
+          >
+            <Trash2 />
+          </button>
+        )}
+      </div>
+
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('deleteLocale.title')}</DialogTitle>
+            <DialogDescription>
+              {t('deleteLocale.description', { name })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button color="zinc">{tCommon('cancel')}</Button>
+            </DialogClose>
+            <Button color="cyan" onClick={handleDelete}>
+              {tCommon('delete')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

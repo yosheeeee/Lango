@@ -2,5 +2,9 @@
   "localizations": {
     "title": "Localizations",
     "newLocalePlaceholder": "locale name"
+  },
+  "deleteLocale": {
+    "title": "Delete localization",
+    "description": "Are you sure you want to delete \"{{name}}\"? All files inside will be removed."
   }
 }

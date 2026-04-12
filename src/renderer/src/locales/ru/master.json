@@ -2,5 +2,9 @@
   "localizations": {
     "title": "Локализации",
     "newLocalePlaceholder": "название локали"
+  },
+  "deleteLocale": {
+    "title": "Удалить локализацию",
+    "description": "Вы уверены, что хотите удалить «{{name}}»? Все файлы будут удалены."
   }
 }

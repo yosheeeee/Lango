@@ -330,6 +330,16 @@ export class ProjectService {
     return result
   }
 
+  /**
+   * Удаляет папку локали и все её содержимое.
+   */
+  deleteLocale(localeName: string): void {
+    const localePath = path.join(this.projectPath, localeName)
+    if (fs.existsSync(localePath)) {
+      fs.rmSync(localePath, { recursive: true })
+    }
+  }
+
   checkProjectStructure(): string | null {
     try {
       // Проверяем, существует ли папка
