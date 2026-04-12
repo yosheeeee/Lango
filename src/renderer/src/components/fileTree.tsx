@@ -7,7 +7,15 @@ import { Slot } from '@radix-ui/react-slot'
 import { ComponentProps, FC, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink } from 'react-router-dom'
-import { FileJson2, FileWarning, Folder, FolderOpen, LucidePlus, Trash2 } from 'lucide-react'
+import {
+  FileJson2,
+  FileWarning,
+  Folder,
+  FolderOpen,
+  LucidePlus,
+  Trash2,
+  Wrench
+} from 'lucide-react'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './collapsible'
 import { useFileTreeStore } from '@renderer/stores/fileTreeStore'
 import {
@@ -26,6 +34,7 @@ import {
   DialogClose
 } from './dialog'
 import { Button } from './button'
+import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip'
 
 export type FileTreeGroup = FileTreeGroupType
 export type FileTreeItem = FileTreeItemType
@@ -104,14 +113,17 @@ export function FileTreeGroup({
               {folderPath && (
                 <button
                   data-delete-btn=""
-                  className="opacity-0 group-hover:opacity-100 flex items-center [&>svg]:size-[14px] text-gray-400 hover:text-red-400"
+                  className="opacity-0 cursor-pointer group-hover:opacity-100 flex items-center [&>svg]:size-[14px] text-gray-400 hover:text-red-400"
                   onClick={() => setConfirmOpen(true)}
                 >
                   <Trash2 />
                 </button>
               )}
               <DropdownMenu>
-                <DropdownMenuTrigger data-create-btn="" className="flex items-center [&>svg]:size-[16px] bg-transparent p-0 h-auto rounded-sm text-gray-400 hover:text-white">
+                <DropdownMenuTrigger
+                  data-create-btn=""
+                  className="flex items-center [&>svg]:size-[16px] bg-transparent p-0 h-auto rounded-sm text-gray-400 hover:text-white"
+                >
                   <LucidePlus />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
@@ -133,41 +145,43 @@ export function FileTreeGroup({
             </div>
           </TreeItem>
         </CollapsibleTrigger>
-      <CollapsibleContent className="mt-1 ml-5 style-lyra:ml-4">
-        <div className="flex flex-col gap-1">
-          {creatingType && (
-            <div className="flex items-center gap-1 px-2 py-1">
-              {creatingType === 'file' ? (
-                <FileJson2 className="size-[18px] shrink-0 text-gray-400" />
+        <CollapsibleContent className="mt-1 ml-5 style-lyra:ml-4">
+          <div className="flex flex-col gap-1">
+            {creatingType && (
+              <div className="flex items-center gap-1 px-2 py-1">
+                {creatingType === 'file' ? (
+                  <FileJson2 className="size-[18px] shrink-0 text-gray-400" />
+                ) : (
+                  <Folder className="size-[18px] shrink-0 text-gray-400" />
+                )}
+                <input
+                  ref={inputRef}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={handleInputKeyDown}
+                  onBlur={() => {
+                    setCreatingType(null)
+                    setInputValue('')
+                  }}
+                  placeholder={
+                    creatingType === 'file' ? t('filenamePlaceholder') : t('folderNamePlaceholder')
+                  }
+                  className="bg-transparent outline-none text-sm w-full placeholder:text-gray-600"
+                />
+              </div>
+            )}
+            {nestedItems.map((child) =>
+              'nestedItems' in child ? (
+                <FileTreeGroup
+                  {...child}
+                  depth={depth + 1}
+                  folderPath={folderPath ? `${folderPath}/${child.name}` : child.name}
+                />
               ) : (
-                <Folder className="size-[18px] shrink-0 text-gray-400" />
-              )}
-              <input
-                ref={inputRef}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleInputKeyDown}
-                onBlur={() => {
-                  setCreatingType(null)
-                  setInputValue('')
-                }}
-                placeholder={creatingType === 'file' ? t('filenamePlaceholder') : t('folderNamePlaceholder')}
-                className="bg-transparent outline-none text-sm w-full placeholder:text-gray-600"
-              />
-            </div>
-          )}
-          {nestedItems.map((child) =>
-            'nestedItems' in child ? (
-              <FileTreeGroup
-                {...child}
-                depth={depth + 1}
-                folderPath={folderPath ? `${folderPath}/${child.name}` : child.name}
-              />
-            ) : (
-              <FileTreeItem {...child} depth={depth + 1} />
-            )
-          )}
-        </div>
+                <FileTreeItem {...child} depth={depth + 1} />
+              )
+            )}
+          </div>
         </CollapsibleContent>
       </Collapsible>
 
@@ -175,9 +189,7 @@ export function FileTreeGroup({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('deleteFolder.title')}</DialogTitle>
-            <DialogDescription>
-              {t('deleteFolder.description', { name })}
-            </DialogDescription>
+            <DialogDescription>{t('deleteFolder.description', { name })}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <DialogClose asChild>
@@ -211,6 +223,15 @@ export function FileTreeItem({
     useFileTreeStore.getState().invalidateTree()
   }
 
+  const handleFixOrphan = async (e) => {
+    // link вида "/auth/login", убираем ведущий слэш для namespacePath
+    e.preventDefault()
+    e.stopPropagation()
+    const namespacePath = link.slice(1)
+    await window.api.project.fixOrphanNamespace(namespacePath)
+    useFileTreeStore.getState().invalidateTree()
+  }
+
   return (
     <>
       <TreeItem
@@ -224,18 +245,35 @@ export function FileTreeItem({
             <FileIcon className={cn('size-[18px]', { 'text-red-500': isOrphan })} />
             <span>{name}</span>
           </div>
-          <div
-            role="button"
-            tabIndex={-1}
-            data-delete-btn=""
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              setConfirmOpen(true)
-            }}
-            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-400 [&>svg]:size-[14px]"
-          >
-            <Trash2 />
+          <div className="flex items-center gap-2 [&_svg]:size-[14px]">
+            {isOrphan && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleFixOrphan}
+                    className="text-gray-400 hover:text-amber-500 transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
+                  >
+                    <Wrench />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('fixOrphan')}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            <button
+              role="button"
+              tabIndex={-1}
+              data-delete-btn=""
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setConfirmOpen(true)
+              }}
+              className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-400 cursor-pointer"
+            >
+              <Trash2 />
+            </button>
           </div>
         </NavLink>
       </TreeItem>
@@ -244,9 +282,7 @@ export function FileTreeItem({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('deleteNamespace.title')}</DialogTitle>
-            <DialogDescription>
-              {t('deleteNamespace.description', { name })}
-            </DialogDescription>
+            <DialogDescription>{t('deleteNamespace.description', { name })}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <DialogClose asChild>

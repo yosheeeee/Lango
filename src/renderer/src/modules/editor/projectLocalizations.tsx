@@ -149,7 +149,7 @@ function LocalizationNode({
         {canDelete && (
           <button
             data-delete-btn=""
-            className="opacity-0 group-hover:opacity-100 flex items-center [&>svg]:size-[14px] text-gray-400 hover:text-red-400"
+            className="opacity-0 cursor-pointer group-hover:opacity-100 flex items-center [&>svg]:size-[14px] text-gray-400 hover:text-red-400"
             onClick={() => setConfirmOpen(true)}
           >
             <Trash2 />
@@ -161,9 +161,7 @@ function LocalizationNode({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('deleteLocale.title')}</DialogTitle>
-            <DialogDescription>
-              {t('deleteLocale.description', { name })}
-            </DialogDescription>
+            <DialogDescription>{t('deleteLocale.description', { name })}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <DialogClose asChild>

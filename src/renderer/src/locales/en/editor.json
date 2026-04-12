@@ -12,6 +12,7 @@
     "deleteFolder": {
       "title": "Delete folder",
       "description": "Are you sure you want to delete «{{name}}»? All files inside will be removed from all locales."
-    }
+    },
+    "fixOrphan": "Add file to all localizations"
   }
 }

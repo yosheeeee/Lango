@@ -191,6 +191,45 @@ export class ProjectService {
   }
 
   /**
+   * Добавляет неймспейс в отсутствующие локали, копируя ключи из существующего файла.
+   * Отличается от createNamespace тем, что копирует структуру ключей с пустыми значениями.
+   */
+  fixOrphanNamespace(namespacePath: string): void {
+    const locales = this.getLocaleFolders()
+    if (locales.length === 0) throw new Error('No locale folders found')
+
+    // Находим первую локаль где файл уже существует
+    let sourceLocale: string | null = null
+    let sourceJson: Record<string, unknown> = {}
+    for (const locale of locales) {
+      const filePath = path.join(this.projectPath, locale, `${namespacePath}.json`)
+      if (fs.existsSync(filePath)) {
+        try {
+          const content = fs.readFileSync(filePath, 'utf-8')
+          sourceJson = JSON.parse(content)
+          sourceLocale = locale
+          break
+        } catch {
+          // ignore
+        }
+      }
+    }
+    if (!sourceLocale) throw new Error(`No existing file found for namespace "${namespacePath}"`)
+
+    // Очищаем значения, сохраняя структуру
+    const emptiedJson = this.emptyValues(sourceJson)
+
+    // Создаём файл в локалях где его нет
+    for (const locale of locales) {
+      const filePath = path.join(this.projectPath, locale, `${namespacePath}.json`)
+      if (!fs.existsSync(filePath)) {
+        fs.mkdirSync(path.dirname(filePath), { recursive: true })
+        fs.writeFileSync(filePath, JSON.stringify(emptiedJson, null, 2), 'utf-8')
+      }
+    }
+  }
+
+  /**
    * Удаляет .json файл неймспейса из всех папок локализаций.
    * namespacePath — относительный путь без расширения, например "common" или "auth/login"
    */

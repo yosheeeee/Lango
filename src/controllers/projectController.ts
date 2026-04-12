@@ -38,6 +38,15 @@ ipcMain.handle('project:createNamespace', (_, namespacePath: string) => {
   return true
 })
 
+// Добавить неймспейс в отсутствующие локали с копированием ключей
+ipcMain.handle('project:fixOrphanNamespace', (_, namespacePath: string) => {
+  const session = sessionService.getCurrentSession()
+  if (!session) throw new Error('No active session')
+  const projectService = new ProjectService(session.path)
+  projectService.fixOrphanNamespace(namespacePath)
+  return true
+})
+
 // Удалить неймспейс из всех локализаций
 ipcMain.handle('project:deleteNamespace', (_, namespacePath: string) => {
   const session = sessionService.getCurrentSession()
@@ -90,6 +99,7 @@ const projectServiceStub = {
   stopWatcher: () => true,
   getLocaleFolders: () => [] as unknown as ReturnType<ProjectService['getLocaleFolders']>,
   createNamespace: (_namespacePath: string) => true,
+  fixOrphanNamespace: (_namespacePath: string) => true,
   deleteNamespace: (_namespacePath: string) => true,
   createFolder: (_folderPath: string) => true,
   deleteFolder: (_folderPath: string) => true,

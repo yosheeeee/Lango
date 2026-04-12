@@ -26,6 +26,8 @@ export const api: ControllerHandler = {
     getLocaleFolders: () => ipcRenderer.invoke('project:getLocaleFolders'),
     createNamespace: (namespacePath: string) =>
       ipcRenderer.invoke('project:createNamespace', namespacePath),
+    fixOrphanNamespace: (namespacePath: string) =>
+      ipcRenderer.invoke('project:fixOrphanNamespace', namespacePath),
     deleteNamespace: (namespacePath: string) =>
       ipcRenderer.invoke('project:deleteNamespace', namespacePath),
     createFolder: (folderPath: string) => ipcRenderer.invoke('project:createFolder', folderPath),
