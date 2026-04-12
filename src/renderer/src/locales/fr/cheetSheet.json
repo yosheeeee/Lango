@@ -1,0 +1,19 @@
+{
+  "title": "",
+  "keybind": "",
+  "action": "",
+  "master": {
+    "toggle": ""
+  },
+  "cheatSheet": {
+    "toggle": ""
+  },
+  "search": {
+    "toggle": ""
+  },
+  "projectTree": {
+    "focus": "",
+    "newItem": "",
+    "deleteItem": ""
+  }
+}

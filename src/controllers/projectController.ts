@@ -65,6 +65,15 @@ ipcMain.handle('project:createFolder', (_, folderPath: string) => {
   return true
 })
 
+// Создать новую локаль с копированием структуры неймспейсов
+ipcMain.handle('project:createLocale', (_, localeName: string) => {
+  const session = sessionService.getCurrentSession()
+  if (!session) throw new Error('No active session')
+  const projectService = new ProjectService(session.path)
+  projectService.createLocale(localeName)
+  return true
+})
+
 type Service = typeof projectServiceStub
 
 const projectServiceStub = {
@@ -74,7 +83,8 @@ const projectServiceStub = {
   createNamespace: (_namespacePath: string) => true,
   deleteNamespace: (_namespacePath: string) => true,
   createFolder: (_folderPath: string) => true,
-  deleteFolder: (_folderPath: string) => true
+  deleteFolder: (_folderPath: string) => true,
+  createLocale: (_localeName: string) => true
 }
 
 export type ProjectHandler = GenericControllerHandler<Service>

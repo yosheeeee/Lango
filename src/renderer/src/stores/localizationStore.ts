@@ -7,6 +7,7 @@ type LocalizationState = {
 
 type LocalizationActions = {
   fetchLocales: () => Promise<void>
+  addLocale: (localeName: string) => Promise<void>
 }
 
 type LocalizationStore = LocalizationState & LocalizationActions
@@ -29,5 +30,10 @@ export const useLocalizationStore = create<LocalizationStore>()((set) => ({
       console.error('Failed to fetch locales:', e)
       set({ locales: [], isLoading: false })
     }
+  },
+
+  addLocale: async (localeName: string) => {
+    await window.api.project.createLocale(localeName)
+    set((state) => ({ locales: [...state.locales, localeName].sort() }))
   }
 }))

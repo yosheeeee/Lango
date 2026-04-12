@@ -251,6 +251,85 @@ export class ProjectService {
     }
   }
 
+  /**
+   * Создаёт новую локаль с полным переносом структуры неймспейсов
+   * из существующих локалей (за исключением файлов-сирот).
+   * Ключи копируются 1-в-1, но со значениями-пустыми строками.
+   */
+  createLocale(localeName: string): void {
+    const existingLocales = this.getLocaleFolders()
+    if (existingLocales.includes(localeName)) {
+      throw new Error(`Locale "${localeName}" already exists`)
+    }
+    if (existingLocales.length === 0) {
+      throw new Error('No existing locales to copy structure from')
+    }
+
+    // Получаем дерево ДО создания папки, чтобы не считать все файлы сиротами
+    const tree = this.getFileTree('temp')
+
+    // Создаём папку новой локали
+    const newLocalePath = path.join(this.projectPath, localeName)
+    fs.mkdirSync(newLocalePath, { recursive: true })
+
+    // Рекурсивно копируем структуру только для НЕ-сирот
+    const copyStructure = (
+      items: (typeof tree.root.nestedItems),
+      relativeDir: string
+    ) => {
+      for (const item of items) {
+        if ('nestedItems' in item) {
+          // Это папка — пропускаем сироты
+          if (item.isOrphan) continue
+          const dirPath = relativeDir ? `${relativeDir}/${item.name}` : item.name
+          const fullPath = path.join(newLocalePath, dirPath)
+          fs.mkdirSync(fullPath, { recursive: true })
+          copyStructure(item.nestedItems, dirPath)
+        } else {
+          // Это файл — пропускаем сироты
+          if (item.isOrphan) continue
+          const fileName = `${item.name}.json`
+          const filePath = relativeDir ? `${relativeDir}/${fileName}` : fileName
+          const fullPath = path.join(newLocalePath, filePath)
+
+          // Берём файл из первой локали где он есть
+          const sourceLocale = item.locales[0]
+          if (!sourceLocale) continue
+          const sourcePath = path.join(this.projectPath, sourceLocale, filePath)
+
+          try {
+            const content = fs.readFileSync(sourcePath, 'utf-8')
+            const json = JSON.parse(content)
+            // Рекурсивно очищаем значения, сохраняя структуру ключей
+            const emptiedJson = this.emptyValues(json)
+            fs.writeFileSync(fullPath, JSON.stringify(emptiedJson, null, 2), 'utf-8')
+          } catch (e) {
+            // Если файл не удалось прочитать — создаём пустой
+            fs.writeFileSync(fullPath, '{}', 'utf-8')
+          }
+        }
+      }
+    }
+
+    copyStructure(tree.root.nestedItems, '')
+  }
+
+  /**
+   * Рекурсивно заменяет все значения в объекте на пустые строки,
+   * сохраняя структуру ключей.
+   */
+  private emptyValues(obj: Record<string, unknown>): Record<string, unknown> {
+    const result: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(obj)) {
+      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        result[key] = this.emptyValues(value as Record<string, unknown>)
+      } else {
+        result[key] = ''
+      }
+    }
+    return result
+  }
+
   checkProjectStructure(): string | null {
     try {
       // Проверяем, существует ли папка

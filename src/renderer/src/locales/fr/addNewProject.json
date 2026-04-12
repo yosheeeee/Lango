@@ -1,0 +1,13 @@
+{
+  "title": "",
+  "name": "",
+  "color": "",
+  "projectPath": "",
+  "errors": {
+    "path_existed": "",
+    "name_existed": "",
+    "folder_not_found": "",
+    "found_invalid_files": "",
+    "error_checking": ""
+  }
+}

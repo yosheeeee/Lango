@@ -29,6 +29,7 @@ export const api: ControllerHandler = {
     deleteNamespace: (namespacePath: string) =>
       ipcRenderer.invoke('project:deleteNamespace', namespacePath),
     createFolder: (folderPath: string) => ipcRenderer.invoke('project:createFolder', folderPath),
-    deleteFolder: (folderPath: string) => ipcRenderer.invoke('project:deleteFolder', folderPath)
+    deleteFolder: (folderPath: string) => ipcRenderer.invoke('project:deleteFolder', folderPath),
+    createLocale: (localeName: string) => ipcRenderer.invoke('project:createLocale', localeName)
   }
 }

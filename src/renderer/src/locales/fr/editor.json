@@ -1,0 +1,17 @@
+{
+  "welcomeMessage": "",
+  "fileTree": {
+    "newFile": "",
+    "newFolder": "",
+    "filenamePlaceholder": "",
+    "folderNamePlaceholder": "",
+    "deleteNamespace": {
+      "title": "",
+      "description": ""
+    },
+    "deleteFolder": {
+      "title": "",
+      "description": ""
+    }
+  }
+}
