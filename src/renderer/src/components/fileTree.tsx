@@ -103,6 +103,7 @@ export function FileTreeGroup({
             <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
               {folderPath && (
                 <button
+                  data-delete-btn=""
                   className="opacity-0 group-hover:opacity-100 flex items-center [&>svg]:size-[14px] text-gray-400 hover:text-red-400"
                   onClick={() => setConfirmOpen(true)}
                 >
@@ -110,7 +111,7 @@ export function FileTreeGroup({
                 </button>
               )}
               <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center [&>svg]:size-[16px] bg-transparent p-0 h-auto rounded-sm text-gray-400 hover:text-white">
+                <DropdownMenuTrigger data-create-btn="" className="flex items-center [&>svg]:size-[16px] bg-transparent p-0 h-auto rounded-sm text-gray-400 hover:text-white">
                   <LucidePlus />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
@@ -226,6 +227,7 @@ export function FileTreeItem({
           <div
             role="button"
             tabIndex={-1}
+            data-delete-btn=""
             onClick={(e) => {
               e.preventDefault()
               e.stopPropagation()

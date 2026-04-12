@@ -12,6 +12,8 @@
     "toggle": "Toggle search tool"
   },
   "projectTree": {
-    "focus": "Focus project tree"
+    "focus": "Focus project tree",
+    "newItem": "Create file or folder",
+    "deleteItem": "Delete focused item"
   }
 }

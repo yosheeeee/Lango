@@ -10,7 +10,8 @@ export default function KeybindsProvider({ children }: PropsWithChildren) {
 
     Object.entries(keyBinds).forEach(([commandId, keys]) => {
       bindingsForTinykeys[keys] = (event) => {
-        event.preventDefault() // Часто в IDE нужно отменять стандартное поведение браузера
+        if (document.activeElement instanceof HTMLInputElement) return
+        event.preventDefault()
         keybindFunctions[commandId]()
       }
     })

@@ -6,5 +6,7 @@ export const keyBinds: KeybindsMap = {
   'master.toggle': 'Control+KeyB',
   'cheatSheet.toggle': 'Control+KeyK',
   'search.toggle': 'Control+KeyP',
-  'projectTree.focus': 'Control+KeyE'
+  'projectTree.focus': 'Control+KeyE',
+  'projectTree.newItem': 'Control+KeyN',
+  'projectTree.deleteItem': 'Delete'
 }
