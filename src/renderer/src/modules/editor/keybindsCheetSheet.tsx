@@ -26,7 +26,7 @@ export default function KeybindsCheetSheet() {
             </TableHeader>
             <TableBody>
               {Object.entries(keyBinds).map(([key, bind]) => (
-                <TableRow>
+                <TableRow key={key}>
                   <TableCell>{t(key)}</TableCell>
                   <TableCell>
                     <div className="rounded-md bg-gray-600 w-max px-2 py-0.5 mx-auto">

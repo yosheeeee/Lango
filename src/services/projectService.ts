@@ -90,10 +90,7 @@ export class ProjectService {
       }
     }
 
-    const buildItems = (
-      node: DirNode,
-      relativeDir: string
-    ): (FileTreeGroup | FileTreeItem)[] => {
+    const buildItems = (node: DirNode, relativeDir: string): (FileTreeGroup | FileTreeItem)[] => {
       const items: (FileTreeGroup | FileTreeItem)[] = []
 
       const sortedDirs = [...node.dirs.entries()].sort(([a], [b]) => a.localeCompare(b))
@@ -312,10 +309,7 @@ export class ProjectService {
     fs.mkdirSync(newLocalePath, { recursive: true })
 
     // Рекурсивно копируем структуру только для НЕ-сирот
-    const copyStructure = (
-      items: (typeof tree.root.nestedItems),
-      relativeDir: string
-    ) => {
+    const copyStructure = (items: typeof tree.root.nestedItems, relativeDir: string) => {
       for (const item of items) {
         if ('nestedItems' in item) {
           // Это папка — пропускаем сироты
@@ -342,7 +336,7 @@ export class ProjectService {
             // Рекурсивно очищаем значения, сохраняя структуру ключей
             const emptiedJson = this.emptyValues(json)
             fs.writeFileSync(fullPath, JSON.stringify(emptiedJson, null, 2), 'utf-8')
-          } catch (e) {
+          } catch {
             // Если файл не удалось прочитать — создаём пустой
             fs.writeFileSync(fullPath, '{}', 'utf-8')
           }

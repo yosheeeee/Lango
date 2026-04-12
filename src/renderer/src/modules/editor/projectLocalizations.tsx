@@ -20,7 +20,6 @@ export default function ProjectLocalizations() {
   const { currentSession } = useSessionStore()
   const { locales, isLoading, fetchLocales, addLocale, deleteLocale } = useLocalizationStore()
   const { t } = useTranslation('master')
-  const { t: tCommon } = useTranslation('common')
   const [isCreating, setIsCreating] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)

@@ -51,6 +51,6 @@ const FooterFileTreeItem = ({ text, count, Icon }: { text: string; count: number
   </Tooltip>
 )
 
-const FooterGroup: FC<ComponentProps<'div'>> = ({ className, ...props }) => (
+const FooterGroup: FC<ComponentProps<'div'>> = (props) => (
   <div {...props} className={cn('flex items-center gap-3')} />
 )

@@ -173,12 +173,13 @@ export function FileTreeGroup({
             {nestedItems.map((child) =>
               'nestedItems' in child ? (
                 <FileTreeGroup
+                  key={child.name + (folderPath ? `-${folderPath}` : '')}
                   {...child}
                   depth={depth + 1}
                   folderPath={folderPath ? `${folderPath}/${child.name}` : child.name}
                 />
               ) : (
-                <FileTreeItem {...child} depth={depth + 1} />
+                <FileTreeItem key={child.link} {...child} depth={depth + 1} />
               )
             )}
           </div>
@@ -209,9 +210,8 @@ export function FileTreeItem({
   name,
   link,
   depth = 0,
-  isOrphan,
-  locales: _locales
-}: FileTreeItemType & { depth?: number }) {
+  isOrphan
+}: Omit<FileTreeItemType, 'locales'> & { depth?: number }) {
   const FileIcon = isOrphan ? FileWarning : FileJson2
   const [confirmOpen, setConfirmOpen] = useState(false)
   const { t } = useTranslation('editor', { keyPrefix: 'fileTree' })

@@ -5,7 +5,7 @@ export const keybindFunctions = {
     useEditorStore.getState().toggleMaster()
   },
   'projectTree.focus'() {
-    let { masterPanel, projectTreeRef, toggleMaster } = useEditorStore.getState()
+    const { masterPanel, projectTreeRef, toggleMaster } = useEditorStore.getState()
     if (!masterPanel) {
       toggleMaster()
       requestAnimationFrame(() => projectTreeRef?.current?.focus())
@@ -39,7 +39,10 @@ export const keybindFunctions = {
       targetFolder = items
         .slice(0, idx)
         .reverse()
-        .find((el) => parseInt(el.dataset.treeDepth ?? '0') < depth && el.hasAttribute('data-tree-folder'))
+        .find(
+          (el) =>
+            parseInt(el.dataset.treeDepth ?? '0') < depth && el.hasAttribute('data-tree-folder')
+        )
     }
 
     const btn = targetFolder?.querySelector<HTMLElement>('[data-create-btn]')

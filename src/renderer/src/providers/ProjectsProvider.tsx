@@ -10,15 +10,21 @@ function useProjectsContext() {
   const fetchSessions = useCallback(async (): Promise<void> => {
     const sessions = await window.api.session.getSessions()
     setProjects(sessions)
-  }, [])
+  }, [setProjects])
 
-  const onAddNewSession = useCallback((newSession: Session): void => {
-    setProjects((prev) => [newSession, ...prev])
-  }, [])
+  const onAddNewSession = useCallback(
+    (newSession: Session): void => {
+      setProjects((prev) => [newSession, ...prev])
+    },
+    [setProjects]
+  )
 
-  const onDeleteSession = useCallback((id: Session['id']): void => {
-    setProjects((prev) => prev.filter((s) => s.id != id))
-  }, [])
+  const onDeleteSession = useCallback(
+    (id: Session['id']): void => {
+      setProjects((prev) => prev.filter((s) => s.id != id))
+    },
+    [setProjects]
+  )
 
   const selectSession = useCallback(
     async (s: Session): Promise<void> => {

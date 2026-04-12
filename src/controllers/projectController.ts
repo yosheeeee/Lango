@@ -94,17 +94,20 @@ ipcMain.handle('project:deleteLocale', (_, localeName: string) => {
 
 type Service = typeof projectServiceStub
 
+// Stub for type inference — used only via `typeof` in Service type
+/* eslint-disable @typescript-eslint/no-unused-vars */
 const projectServiceStub = {
   getFileTree: () => null as unknown as ReturnType<ProjectService['getFileTree']> | null,
   stopWatcher: () => true,
   getLocaleFolders: () => [] as unknown as ReturnType<ProjectService['getLocaleFolders']>,
-  createNamespace: (_namespacePath: string) => true,
-  fixOrphanNamespace: (_namespacePath: string) => true,
-  deleteNamespace: (_namespacePath: string) => true,
-  createFolder: (_folderPath: string) => true,
-  deleteFolder: (_folderPath: string) => true,
-  createLocale: (_localeName: string) => true,
-  deleteLocale: (_localeName: string) => true
+  createNamespace: (namespacePath: string) => void namespacePath,
+  fixOrphanNamespace: (namespacePath: string) => void namespacePath,
+  deleteNamespace: (namespacePath: string) => void namespacePath,
+  createFolder: (folderPath: string) => void folderPath,
+  deleteFolder: (folderPath: string) => void folderPath,
+  createLocale: (localeName: string) => void localeName,
+  deleteLocale: (localeName: string) => void localeName
 }
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 export type ProjectHandler = GenericControllerHandler<Service>
