@@ -1,4 +1,5 @@
 export const routerPaths = {
   projectSelect: '/',
-  editor: '/editor'
+  editor: '/editor',
+  editorFile: ':filePath'
 }

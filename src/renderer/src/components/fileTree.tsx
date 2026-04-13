@@ -4,9 +4,9 @@ import type {
 } from 'src/domain/models/fileTree'
 import { cn } from '@renderer/utils/cn'
 import { Slot } from '@radix-ui/react-slot'
-import { ComponentProps, FC, useRef, useState } from 'react'
+import { ComponentProps, FC, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import {
   FileJson2,
   FileWarning,
@@ -35,6 +35,7 @@ import {
 } from './dialog'
 import { Button } from './button'
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip'
+import { routerPaths } from '@renderer/router/routerPaths'
 
 export type FileTreeGroup = FileTreeGroupType
 export type FileTreeItem = FileTreeItemType
@@ -216,6 +217,12 @@ export function FileTreeItem({
   const [confirmOpen, setConfirmOpen] = useState(false)
   const { t } = useTranslation('editor', { keyPrefix: 'fileTree' })
   const { t: tCommon } = useTranslation('common')
+  const { pathname } = useLocation()
+
+  const isActive = useMemo(
+    () => pathname.slice(routerPaths.editor.length)?.includes(link) ?? false,
+    [pathname, link]
+  )
 
   const handleDelete = async () => {
     await window.api.project.deleteNamespace(link.slice(1))
@@ -224,7 +231,6 @@ export function FileTreeItem({
   }
 
   const handleFixOrphan = async (e) => {
-    // link вида "/auth/login", убираем ведущий слэш для namespacePath
     e.preventDefault()
     e.stopPropagation()
     const namespacePath = link.slice(1)
@@ -240,7 +246,10 @@ export function FileTreeItem({
         data-tree-depth={depth}
         data-orphan={isOrphan || undefined}
       >
-        <NavLink to={link} className={'gap-1 justify-between group hover:underline'}>
+        <NavLink
+          to={[routerPaths.editor, link].join('')}
+          className={`gap-1 justify-between group hover:underline ${isActive ? 'bg-gray-700 hover:bg-gray-600!' : ''}`}
+        >
           <div className="flex items-center gap-1">
             <FileIcon className={cn('size-[18px]', { 'text-red-500': isOrphan })} />
             <span>{name}</span>

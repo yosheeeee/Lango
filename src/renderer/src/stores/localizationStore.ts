@@ -3,6 +3,7 @@ import { create } from 'zustand'
 type LocalizationState = {
   locales: string[]
   isLoading: boolean
+  currentLocale: string | null
 }
 
 type LocalizationActions = {
@@ -15,6 +16,7 @@ type LocalizationStore = LocalizationState & LocalizationActions
 
 const initialState: LocalizationState = {
   locales: [],
+  currentLocale: null,
   isLoading: false
 }
 
@@ -26,7 +28,7 @@ export const useLocalizationStore = create<LocalizationStore>()((set) => ({
     try {
       const locales = await window.api.project.getLocaleFolders()
       console.log('[localizationStore] fetchLocales result:', locales)
-      set({ locales: locales ?? [], isLoading: false })
+      set({ locales: locales ?? [], currentLocale: locales[0] ?? null, isLoading: false })
     } catch (e) {
       console.error('Failed to fetch locales:', e)
       set({ locales: [], isLoading: false })
@@ -40,6 +42,12 @@ export const useLocalizationStore = create<LocalizationStore>()((set) => ({
 
   deleteLocale: async (localeName: string) => {
     await window.api.project.deleteLocale(localeName)
-    set((state) => ({ locales: state.locales.filter((l) => l !== localeName) }))
+    set((state) => {
+      const filteredLocales = state.locales.filter((l) => l !== localeName)
+      return {
+        locales: filteredLocales,
+        currentLocale: state.currentLocale == localeName ? filteredLocales[0] : state.currentLocale
+      }
+    })
   }
 }))
