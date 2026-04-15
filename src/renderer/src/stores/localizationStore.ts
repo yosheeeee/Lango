@@ -10,6 +10,7 @@ type LocalizationActions = {
   fetchLocales: () => Promise<void>
   addLocale: (localeName: string) => Promise<void>
   deleteLocale: (localeName: string) => Promise<void>
+  setCurrentLocale: (localeName: string) => void
 }
 
 type LocalizationStore = LocalizationState & LocalizationActions
@@ -49,5 +50,9 @@ export const useLocalizationStore = create<LocalizationStore>()((set) => ({
         currentLocale: state.currentLocale == localeName ? filteredLocales[0] : state.currentLocale
       }
     })
+  },
+
+  setCurrentLocale: (localeName: string) => {
+    set({ currentLocale: localeName })
   }
 }))

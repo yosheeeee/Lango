@@ -1,41 +1,42 @@
 import { Button } from '@renderer/components/button'
-import { ChevronUp, ListCollapseIcon, MoveLeft, MoveRight } from 'lucide-react'
+import { ChevronUp, ListCollapseIcon, MoveLeft, MoveRight, Plus } from 'lucide-react'
 import { useFileTreeStore } from '@renderer/stores/fileTreeStore'
 import { FileTreeGroup, FileTreeItem } from 'src/domain/models/fileTree'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useCallback, useMemo } from 'react'
 import { routerPaths } from '@renderer/router/routerPaths'
-import EntryEditor from './entryEditor'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger
-} from '@renderer/components/collapsible'
+import EntryEditor, { CollabsibleTranslationsEntry } from './entryEditor'
+import { ActiveLocalizationSwitcher } from './activeLocalizationSwitcher'
 
 export default function DetailEditor() {
   return (
     <section id="detail-editor" className="flex-1 h-full flex flex-col gap-2 p-3">
       <div className="flex-1 h-full flex flex-col gap-4">
+        <div className="flex w-full items-center justify-between">
+          <div className="flex items-end gap-1">
+            <p className="text-xl">Current Localization:</p>
+            <ActiveLocalizationSwitcher />
+          </div>
+          <Button size={'sm'}>
+            <Plus />
+            Add Key
+          </Button>
+        </div>
         <EntryEditor
           namespace="auth"
           currentLocalizationValue="hello guys"
           translationKey="login.title"
         />
-        <Collapsible>
-          <CollapsibleTrigger asChild>
-            <div className="flex items-center group select-none cursor-pointer">
-              <ChevronUp className='group-data-[state="open"]:rotate-180 transition-transform text-gray-300' />
-              <p>Login</p>
-            </div>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="pl-1.5 border-l border-l-gray-700 ml-3">
-            <EntryEditor
-              namespace="auth"
-              currentLocalizationValue="hello guys"
-              translationKey="login.title"
-            />
-          </CollapsibleContent>
-        </Collapsible>
+        <CollabsibleTranslationsEntry
+          translationKey="test"
+          childNodes={[
+            {
+              namespace: 'auth',
+              currentLocalizationValue: 'hello guys',
+              translationKey: 'auth.test'
+            }
+          ]}
+        />
       </div>
       <NavigateButtons />
     </section>

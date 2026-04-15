@@ -1,3 +1,8 @@
+import {
+  CollapsibleTrigger,
+  CollapsibleContent,
+  Collapsible
+} from '@renderer/components/collapsible'
 import { Input } from '@renderer/components/form'
 import {
   Popover,
@@ -7,8 +12,8 @@ import {
 } from '@renderer/components/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/tooltip'
 import { cn } from '@renderer/utils/cn'
-import { Check, Globe, Pencil, Trash, X } from 'lucide-react'
-import { ComponentProps, useState } from 'react'
+import { Check, ChevronUp, Globe, Pencil, Plus, Trash, X } from 'lucide-react'
+import { ComponentProps, FC, useRef, useState } from 'react'
 
 type EntryEditorProps = ValueEditorProps & ComponentProps<'div'>
 export default function EntryEditor({
@@ -78,9 +83,9 @@ function ValueEditor({ currentLocalizationValue, translationKey, namespace }: Va
               className="flex-1 rounded-r-none focus-visible:ring-0 "
             />
             <PopoverTrigger asChild>
-              <button className="shrink-0 flex items-center justify-center aspect-square size-9 text-gray-400 bg-gray-800 hover:bg-transparent border-gray-600 border border-l-0 rounded-md rounded-l-none cursor-pointer">
-                <Globe className="size-5" />
-              </button>
+              <EditRowButton className="shrink-0  text-gray-400 bg-gray-800 hover:bg-transparent border-gray-600 border border-l-0 rounded-md rounded-l-none cursor-pointer">
+                <Globe />
+              </EditRowButton>
             </PopoverTrigger>
           </div>
         </PopoverAnchor>
@@ -90,9 +95,9 @@ function ValueEditor({ currentLocalizationValue, translationKey, namespace }: Va
       </Popover>
       <Tooltip>
         <TooltipTrigger asChild>
-          <button className="size-9 flex items-center justify-center text-gray-400 rounded-md hover:bg-red-900 hover:text-red-300 transition-colors cursor-pointer">
-            <Trash className="size-5" />
-          </button>
+          <EditRowButton className="text-gray-400 rounded-md hover:bg-red-900 hover:text-red-300 transition-colors cursor-pointer">
+            <Trash />
+          </EditRowButton>
         </TooltipTrigger>
         <TooltipContent side="top">
           <p>Delete key</p>
@@ -111,13 +116,82 @@ function KeyEditor({ onFinish, namespace, translationKey }: KeyEditorProps) {
     <div className="flex gap-2.5 w-full">
       <Input className="flex-1" />
       <div className="flex gap-1 shrink-0">
-        <button onClick={onFinish} className="size-9 flex items-center justify-center">
+        <EditRowButton onClick={onFinish}>
           <Check />
-        </button>
-        <button onClick={onFinish} className="size-9 flex items-center justify-center">
+        </EditRowButton>
+        <EditRowButton onClick={onFinish}>
           <X />
-        </button>
+        </EditRowButton>
       </div>
     </div>
   )
 }
+
+type CollapsibleTranslationEntry = Pick<ValueEditorProps, 'translationKey'> & {
+  childNodes?: (CollapsibleTranslationEntry | ValueEditorProps)[]
+}
+export function CollabsibleTranslationsEntry({
+  translationKey,
+  childNodes
+}: CollapsibleTranslationEntry) {
+  const ref = useRef<HTMLInputElement>(null)
+  return (
+    <Collapsible defaultOpen>
+      <CollapsibleTrigger asChild>
+        <div className="flex items-center justify-between group select-none cursor-pointer">
+          <div className="flex items-center gap-1">
+            <ChevronUp className='group-data-[state="open"]:rotate-180 transition-transform text-gray-300' />
+            <p>{translationKey}</p>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <EditRowButton className="size-5 [&>svg]:size-3 bg-gray-700 rounded-sm hover:bg-gray-500">
+                  <Pencil />
+                </EditRowButton>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Edit key</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <EditRowButton className="size-5 [&>svg]:size-3 bg-gray-700 rounded-sm hover:bg-gray-500">
+                  <Plus />
+                </EditRowButton>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Add key</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <EditRowButton className="size-5 [&>svg]:size-3 bg-gray-700 rounded-sm hover:bg-red-900 hover:text-red-300">
+                  <Trash />
+                </EditRowButton>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Delete key</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="pl-1.5 border-l border-l-gray-700 ml-3 flex felx-gol gap-3 pt-2">
+        {childNodes?.map((n) =>
+          'childNodes' in n ? <CollabsibleTranslationsEntry {...n} /> : <EntryEditor {...n} />
+        )}
+      </CollapsibleContent>
+    </Collapsible>
+  )
+}
+
+const EditRowButton: FC<ComponentProps<'button'>> = ({ className, ...props }) => (
+  <button
+    {...props}
+    className={cn(
+      'size-9 flex items-center justify-center [&>svg]:size-5 cursor-pointer',
+      className
+    )}
+  />
+)
