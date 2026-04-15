@@ -92,6 +92,33 @@ ipcMain.handle('project:deleteLocale', (_, localeName: string) => {
   return true
 })
 
+// Удалить ключ локализации из всех файлов неймспейсов
+ipcMain.handle('project:deleteLocalizationKey', (_, namespace: string, key: string) => {
+  const session = sessionService.getCurrentSession()
+  if (!session) throw new Error('No active session')
+  const projectService = new ProjectService(session.path)
+  projectService.deleteLocalizationKey(namespace, key)
+  return true
+})
+
+// Переименовать ключ локализации во всех файлах неймспейсов
+ipcMain.handle('project:renameLocalizationKey', (_, namespace: string, oldKey: string, newKey: string) => {
+  const session = sessionService.getCurrentSession()
+  if (!session) throw new Error('No active session')
+  const projectService = new ProjectService(session.path)
+  projectService.renameLocalizationKey(namespace, oldKey, newKey)
+  return true
+})
+
+// Добавить новый ключ локализации во все файлы неймспейсов
+ipcMain.handle('project:addLocalizationKey', (_, namespace: string, key: string, parentKey?: string) => {
+  const session = sessionService.getCurrentSession()
+  if (!session) throw new Error('No active session')
+  const projectService = new ProjectService(session.path)
+  projectService.addLocalizationKey(namespace, key, parentKey)
+  return true
+})
+
 type Service = typeof projectServiceStub
 
 // Stub for type inference — used only via `typeof` in Service type
@@ -106,7 +133,10 @@ const projectServiceStub = {
   createFolder: (folderPath: string) => void folderPath,
   deleteFolder: (folderPath: string) => void folderPath,
   createLocale: (localeName: string) => void localeName,
-  deleteLocale: (localeName: string) => void localeName
+  deleteLocale: (localeName: string) => void localeName,
+  deleteLocalizationKey: (namespace: string, key: string) => void (namespace + key),
+  renameLocalizationKey: (namespace: string, oldKey: string, newKey: string) => void (namespace + oldKey + newKey),
+  addLocalizationKey: (namespace: string, key: string, parentKey?: string) => void (namespace + key + (parentKey ?? ''))
 }
 /* eslint-enable @typescript-eslint/no-unused-vars */
 

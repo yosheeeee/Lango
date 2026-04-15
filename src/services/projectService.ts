@@ -364,6 +364,157 @@ export class ProjectService {
   }
 
   /**
+   * Удаляет ключ (и все дочерние ключи если это объект) из JSON файла неймспейса во всех локалях.
+   * @param namespace — путь без расширения, например "common" или "auth/login"
+   * @param key — путь к ключу через точку, например "button.submit" или "header"
+   */
+  deleteLocalizationKey(namespace: string, key: string): void {
+    const locales = this.getLocaleFolders()
+    if (locales.length === 0) throw new Error('No locale folders found')
+
+    const keyParts = key.split('.')
+
+    for (const locale of locales) {
+      const filePath = path.join(this.projectPath, locale, `${namespace}.json`)
+      try {
+        if (!fs.existsSync(filePath)) continue
+
+        const content = fs.readFileSync(filePath, 'utf-8')
+        const json = JSON.parse(content)
+
+        // Удаляем ключ из объекта
+        const deleted = this.deleteNestedKey(json, keyParts)
+
+        if (deleted) {
+          fs.writeFileSync(filePath, JSON.stringify(json, null, 2), 'utf-8')
+        }
+      } catch {
+        // ignore invalid JSON or missing files
+      }
+    }
+  }
+
+  /**
+   * Рекурсивно удаляет ключ из объекта по массиву частей пути.
+   * Возвращает true если ключ был найден и удалён.
+   */
+  private deleteNestedKey(obj: Record<string, unknown>, parts: string[]): boolean {
+    if (parts.length === 0) return false
+
+    const [firstPart, ...restParts] = parts
+
+    // Если это последний ключ в пути — удаляем его
+    if (restParts.length === 0) {
+      if (firstPart in obj) {
+        delete obj[firstPart]
+        return true
+      }
+      return false
+    }
+
+    // Если ключ не существует или не является объектом — не найдено
+    if (!(firstPart in obj) || typeof obj[firstPart] !== 'object' || obj[firstPart] === null || Array.isArray(obj[firstPart])) {
+      return false
+    }
+
+    // Рекурсивно удаляем из вложенного объекта
+    return this.deleteNestedKey(obj[firstPart] as Record<string, unknown>, restParts)
+  }
+
+  /**
+   * Переименовывает ключ в JSON файле неймспейса во всех локалях.
+   * @param namespace — путь без расширения, например "common" или "auth/login"
+   * @param oldKey — старый путь к ключу через точку, например "button.submit"
+   * @param newKey — новое имя ключа (последняя часть пути), например "submitBtn"
+   */
+  renameLocalizationKey(namespace: string, oldKey: string, newKey: string): void {
+    const locales = this.getLocaleFolders()
+    if (locales.length === 0) throw new Error('No locale folders found')
+
+    const oldKeyParts = oldKey.split('.')
+    const parentParts = oldKeyParts.slice(0, -1)
+    const oldKeyName = oldKeyParts[oldKeyParts.length - 1]
+
+    for (const locale of locales) {
+      const filePath = path.join(this.projectPath, locale, `${namespace}.json`)
+      try {
+        if (!fs.existsSync(filePath)) continue
+
+        const content = fs.readFileSync(filePath, 'utf-8')
+        const json = JSON.parse(content)
+
+        // Находим родительский объект и значение старого ключа
+        const parent = this.getNestedValue(json, parentParts)
+        if (!parent || typeof parent !== 'object' || !(oldKeyName in parent)) continue
+
+        const value = parent[oldKeyName]
+
+        // Удаляем старый ключ
+        delete parent[oldKeyName]
+
+        // Добавляем новый ключ с тем же значением
+        parent[newKey] = value
+
+        fs.writeFileSync(filePath, JSON.stringify(json, null, 2), 'utf-8')
+      } catch {
+        // ignore invalid JSON or missing files
+      }
+    }
+  }
+
+  /**
+   * Получает вложенное значение из объекта по массиву частей пути.
+   */
+  private getNestedValue(obj: Record<string, unknown>, parts: string[]): unknown {
+    let current: unknown = obj
+    for (const part of parts) {
+      if (current === null || typeof current !== 'object' || !(part in current)) {
+        return undefined
+      }
+      current = (current as Record<string, unknown>)[part]
+    }
+    return current
+  }
+
+  /**
+   * Добавляет новый ключ в JSON файл неймспейса во всех локалях.
+   * @param namespace — путь без расширения, например "common" или "auth/login"
+   * @param key — имя нового ключа
+   * @param parentKey (optional) — путь к родительскому ключу через точку, например "button.variants". Если не указан — ключ добавляется в корень
+   */
+  addLocalizationKey(namespace: string, key: string, parentKey?: string): void {
+    const locales = this.getLocaleFolders()
+    if (locales.length === 0) throw new Error('No locale folders found')
+
+    const parentParts = parentKey ? parentKey.split('.') : []
+
+    for (const locale of locales) {
+      const filePath = path.join(this.projectPath, locale, `${namespace}.json`)
+      try {
+        if (!fs.existsSync(filePath)) continue
+
+        const content = fs.readFileSync(filePath, 'utf-8')
+        const json = JSON.parse(content)
+
+        // Находим родительский объект (или корень, если parentKey не указан)
+        const parent = parentParts.length > 0
+          ? this.getNestedValue(json, parentParts)
+          : json
+
+        // Проверяем что родитель существует и является объектом
+        if (!parent || typeof parent !== 'object' || Array.isArray(parent)) continue
+
+        // Добавляем новый ключ с пустым значением
+        parent[key] = ''
+
+        fs.writeFileSync(filePath, JSON.stringify(json, null, 2), 'utf-8')
+      } catch {
+        // ignore invalid JSON or missing files
+      }
+    }
+  }
+
+  /**
    * Удаляет папку локали и все её содержимое.
    */
   deleteLocale(localeName: string): void {

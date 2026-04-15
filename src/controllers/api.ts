@@ -33,6 +33,12 @@ export const api: ControllerHandler = {
     createFolder: (folderPath: string) => ipcRenderer.invoke('project:createFolder', folderPath),
     deleteFolder: (folderPath: string) => ipcRenderer.invoke('project:deleteFolder', folderPath),
     createLocale: (localeName: string) => ipcRenderer.invoke('project:createLocale', localeName),
-    deleteLocale: (localeName: string) => ipcRenderer.invoke('project:deleteLocale', localeName)
+    deleteLocale: (localeName: string) => ipcRenderer.invoke('project:deleteLocale', localeName),
+    deleteLocalizationKey: (namespace: string, key: string) =>
+      ipcRenderer.invoke('project:deleteLocalizationKey', namespace, key),
+    renameLocalizationKey: (namespace: string, oldKey: string, newKey: string) =>
+      ipcRenderer.invoke('project:renameLocalizationKey', namespace, oldKey, newKey),
+    addLocalizationKey: (namespace: string, key: string, parentKey?: string) =>
+      ipcRenderer.invoke('project:addLocalizationKey', namespace, key, parentKey)
   }
 }
