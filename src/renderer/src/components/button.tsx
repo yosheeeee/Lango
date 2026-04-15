@@ -4,11 +4,11 @@ import { Slot } from '@radix-ui/react-slot'
 import { ComponentProps, FC } from 'react'
 
 const buttonVariants = cva(
-  'flex items-center justify-center cursor-pointer disabled:cursor-default transition-colors [&>svg]:size-[1.4em] outline-none',
+  'flex items-center justify-center cursor-pointer disabled:cursor-default disabled:opacity-60 transition-colors [&>svg]:size-[1.4em] outline-none',
   {
     variants: {
       color: {
-        zinc: 'bg-zinc-600 text-white hover:bg-zinc-500',
+        zinc: 'bg-zinc-600 text-white not-disabled:hover:bg-zinc-500',
         cyan: 'bg-cyan-400 text-cyan-950 hover:bg-cyan-500',
         transparent: ''
       },
