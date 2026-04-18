@@ -49,6 +49,8 @@ export const api: ControllerHandler = {
     getNamespaceOrphanKeys: (namespace: string) =>
       ipcRenderer.invoke('project:getNamespaceOrphanKeys', namespace),
     getAllNamespacesContent: (locale: string) =>
-      ipcRenderer.invoke('project:getAllNamespacesContent', locale)
+      ipcRenderer.invoke('project:getAllNamespacesContent', locale),
+    search: (query: string, _limit = 50, _offset = 0) =>
+      ipcRenderer.invoke('project:search', query, _limit, _offset)
   }
 }

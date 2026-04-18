@@ -102,13 +102,16 @@ ipcMain.handle('project:deleteLocalizationKey', (_, namespace: string, key: stri
 })
 
 // Переименовать ключ локализации во всех файлах неймспейсов
-ipcMain.handle('project:renameLocalizationKey', (_, namespace: string, oldKey: string, newKey: string) => {
-  const session = sessionService.getCurrentSession()
-  if (!session) throw new Error('No active session')
-  const projectService = new ProjectService(session.path)
-  projectService.renameLocalizationKey(namespace, oldKey, newKey)
-  return true
-})
+ipcMain.handle(
+  'project:renameLocalizationKey',
+  (_, namespace: string, oldKey: string, newKey: string) => {
+    const session = sessionService.getCurrentSession()
+    if (!session) throw new Error('No active session')
+    const projectService = new ProjectService(session.path)
+    projectService.renameLocalizationKey(namespace, oldKey, newKey)
+    return true
+  }
+)
 
 // Получить переводы одного ключа по всем локалям
 ipcMain.handle('project:getKeyTranslations', (_, namespace: string, key: string) => {
@@ -119,13 +122,16 @@ ipcMain.handle('project:getKeyTranslations', (_, namespace: string, key: string)
 })
 
 // Обновить значение перевода для конкретной локали
-ipcMain.handle('project:updateLocalizationValue', (_, namespace: string, key: string, locale: string, value: string) => {
-  const session = sessionService.getCurrentSession()
-  if (!session) throw new Error('No active session')
-  const projectService = new ProjectService(session.path)
-  projectService.updateLocalizationValue(namespace, key, locale, value)
-  return true
-})
+ipcMain.handle(
+  'project:updateLocalizationValue',
+  (_, namespace: string, key: string, locale: string, value: string) => {
+    const session = sessionService.getCurrentSession()
+    if (!session) throw new Error('No active session')
+    const projectService = new ProjectService(session.path)
+    projectService.updateLocalizationValue(namespace, key, locale, value)
+    return true
+  }
+)
 
 // Получить содержимое неймспейса (ключи + значения) для конкретной локали
 ipcMain.handle('project:getNamespaceContent', (_, namespace: string, locale: string) => {
@@ -152,12 +158,22 @@ ipcMain.handle('project:getNamespaceOrphanKeys', (_, namespace: string) => {
 })
 
 // Добавить новый ключ локализации во все файлы неймспейсов
-ipcMain.handle('project:addLocalizationKey', (_, namespace: string, key: string, parentKey?: string, isParent?: boolean) => {
+ipcMain.handle(
+  'project:addLocalizationKey',
+  (_, namespace: string, key: string, parentKey?: string, isParent?: boolean) => {
+    const session = sessionService.getCurrentSession()
+    if (!session) throw new Error('No active session')
+    const projectService = new ProjectService(session.path)
+    projectService.addLocalizationKey(namespace, key, parentKey, isParent)
+    return true
+  }
+)
+
+ipcMain.handle('project:search', async (_, query: string, limit = 50, offset = 0) => {
   const session = sessionService.getCurrentSession()
-  if (!session) throw new Error('No active session')
+  if (!session) return { items: [], total: 0, hasMore: false }
   const projectService = new ProjectService(session.path)
-  projectService.addLocalizationKey(namespace, key, parentKey, isParent)
-  return true
+  return await projectService.search(query, limit, offset)
 })
 
 type Service = typeof projectServiceStub
@@ -176,19 +192,28 @@ const projectServiceStub = {
   createLocale: (localeName: string) => void localeName,
   deleteLocale: (localeName: string) => void localeName,
   getKeyTranslations: (namespace: string, key: string) =>
-    ({}) as ReturnType<ProjectService['getKeyTranslations']> & { _u: typeof namespace & typeof key },
+    ({}) as ReturnType<ProjectService['getKeyTranslations']> & {
+      _u: typeof namespace & typeof key
+    },
   updateLocalizationValue: (namespace: string, key: string, locale: string, value: string) =>
     void (namespace + key + locale + value),
   getNamespaceContent: (namespace: string, locale: string) =>
-    null as unknown as ReturnType<ProjectService['getNamespaceContent']> & { _unused: typeof namespace & typeof locale },
+    null as unknown as ReturnType<ProjectService['getNamespaceContent']> & {
+      _unused: typeof namespace & typeof locale
+    },
   deleteLocalizationKey: (namespace: string, key: string) => void (namespace + key),
-  renameLocalizationKey: (namespace: string, oldKey: string, newKey: string) => void (namespace + oldKey + newKey),
+  renameLocalizationKey: (namespace: string, oldKey: string, newKey: string) =>
+    void (namespace + oldKey + newKey),
   addLocalizationKey: (namespace: string, key: string, parentKey?: string, isParent?: boolean) =>
     void (namespace + key + (parentKey ?? '') + String(isParent)),
   getNamespaceOrphanKeys: (namespace: string) =>
     null as unknown as string[] & { _u: typeof namespace },
   getAllNamespacesContent: (locale: string) =>
-    null as unknown as ReturnType<ProjectService['getAllNamespacesContent']> & { _u: typeof locale }
+    null as unknown as ReturnType<ProjectService['getAllNamespacesContent']> & {
+      _u: typeof locale
+    },
+  search: (_: string, _limit?: number, _offset?: number) =>
+    void (_ + String(_limit) + String(_offset))
 }
 /* eslint-enable @typescript-eslint/no-unused-vars */
 

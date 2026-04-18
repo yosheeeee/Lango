@@ -8,7 +8,6 @@ export interface ControllerAPI {
   project: ProjectHandler
 }
 
-// Тип для использования в renderer
 export type ControllerHandler = ControllerAPI
 export type GenericControllerHandler<T> = {
   [K in keyof T]: T[K] extends (...args: infer P) => infer R

@@ -1,3 +1,9 @@
 {
-  "searchPlaceholder": "Поиск проекта"
+  "searchPlaceholder": "Поиск по проекту...",
+  "namespace": "неймспейс",
+  "key": "ключ",
+  "value": "значение",
+  "locale": "локализация",
+  "loadMore": "Загрузить ещё",
+  "more": "осталось"
 }

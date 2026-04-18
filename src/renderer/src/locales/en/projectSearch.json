@@ -1,3 +1,9 @@
 {
-  "searchPlaceholder": "Project Search"
+  "searchPlaceholder": "Search project...",
+  "namespace": "namespace",
+  "key": "key",
+  "value": "value",
+  "locale": "locale",
+  "loadMore": "Load more",
+  "more": "left"
 }

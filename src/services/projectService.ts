@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import { CheckProjectStructureErrors } from '../domain/models/errors'
 import { FileTreeData, FileTreeGroup, FileTreeItem } from '../domain/models/fileTree'
+import { SearchMatch, SearchResult } from '../domain/models/search'
 
 export class ProjectService {
   private projectPath: string
@@ -723,5 +724,169 @@ export class ProjectService {
       '.vscode' // VS Code
     ]
     return ignoredFiles.includes(filename.toLowerCase())
+  }
+
+  async search(query: string, limit: number = 50, offset: number = 0): Promise<SearchResult> {
+    if (!query || !query.trim()) return { items: [], total: 0, hasMore: false }
+
+    const q = query.toLowerCase().trim()
+    const results: SearchMatch[] = []
+    const locales = this.getLocaleFolders()
+
+    // 1. Search in locale names
+    for (const locale of locales) {
+      if (locale.toLowerCase().includes(q)) {
+        const idx = locale.toLowerCase().indexOf(q)
+        results.push({
+          type: 'locale',
+          path: locale,
+          displayName: locale,
+          matchedText: locale,
+          highlight: { start: idx, end: idx + q.length },
+          relevance: this.calcRelevance(locale, q, 'locale')
+        })
+      }
+    }
+
+    // 2. Collect all namespace files and search
+    const namespaceFiles: { namespace: string; locale: string; content: Record<string, unknown> }[] = []
+
+    for (const locale of locales) {
+      const localePath = path.join(this.projectPath, locale)
+      await this.collectNamespaceFiles(localePath, '', locale, namespaceFiles)
+    }
+
+    const seenNamespaces = new Set<string>()
+
+    for (const { namespace, content } of namespaceFiles) {
+      // Search in namespace name
+      if (!seenNamespaces.has(namespace) && namespace.toLowerCase().includes(q)) {
+        const idx = namespace.toLowerCase().indexOf(q)
+        seenNamespaces.add(namespace)
+        results.push({
+          type: 'namespace',
+          path: namespace,
+          displayName: namespace,
+          matchedText: namespace,
+          highlight: { start: idx, end: idx + q.length },
+          relevance: this.calcRelevance(namespace, q, 'namespace')
+        })
+      }
+
+      // Search in keys and values
+      this.searchInObject(content, namespace, q, results)
+
+      // Early exit
+      if (results.length >= limit * 2) break
+    }
+
+    // Sort by relevance desc, then displayName asc
+    results.sort((a, b) => {
+      if (b.relevance !== a.relevance) return b.relevance - a.relevance
+      return a.displayName.localeCompare(b.displayName)
+    })
+
+    const total = results.length
+    const items = results.slice(offset, offset + limit)
+
+    return {
+      items,
+      total,
+      hasMore: offset + limit < total
+    }
+  }
+
+  private async collectNamespaceFiles(
+    dirPath: string,
+    relativeDir: string,
+    locale: string,
+    results: { namespace: string; locale: string; content: Record<string, unknown> }[]
+  ): Promise<void> {
+    try {
+      const entries = await fs.promises.readdir(dirPath, { withFileTypes: true })
+      for (const entry of entries) {
+        if (this.isSystemFile(entry.name)) continue
+
+        const fullPath = path.join(dirPath, entry.name)
+        const relPath = relativeDir ? `${relativeDir}/${entry.name}` : entry.name
+
+        if (entry.isDirectory()) {
+          await this.collectNamespaceFiles(fullPath, relPath, locale, results)
+        } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.json')) {
+          const namespace = relPath.replace(/\.json$/i, '')
+          try {
+            const content = await fs.promises.readFile(fullPath, 'utf-8')
+            const json = JSON.parse(content)
+            results.push({ namespace, locale, content: json as Record<string, unknown> })
+          } catch {
+            results.push({ namespace, locale, content: {} })
+          }
+        }
+      }
+    } catch {
+      // Ignore
+    }
+  }
+
+  private calcRelevance(text: string, query: string, type?: string): number {
+    const lower = text.toLowerCase()
+    const q = query.toLowerCase()
+
+    let score = 50
+
+    if (lower === q) score = 100
+    else if (lower.startsWith(q)) score = 80
+
+    if (type === 'namespace' || type === 'key') score += 20
+
+    return score
+  }
+
+  private searchInObject(
+    obj: Record<string, unknown>,
+    namespace: string,
+    query: string,
+    results: SearchMatch[]
+  ): void {
+    const search = (obj: Record<string, unknown>, parentKey: string) => {
+      for (const [key, value] of Object.entries(obj)) {
+        const fullKey = parentKey ? `${parentKey}.${key}` : key
+        const lowerKey = key.toLowerCase()
+        const q = query.toLowerCase()
+
+        // Search in key
+        if (lowerKey.includes(q)) {
+          const idx = lowerKey.indexOf(q)
+          results.push({
+            type: 'key',
+            path: `${namespace}.${fullKey}`,
+            displayName: fullKey,
+            matchedText: key,
+            highlight: { start: idx, end: idx + query.length },
+            relevance: this.calcRelevance(key, query, 'key')
+          })
+        }
+
+        // Search in value
+        if (typeof value === 'string' && value.toLowerCase().includes(q)) {
+          const idx = value.toLowerCase().indexOf(q)
+          const displayValue = value.length > 50 ? value.slice(0, 50) + '...' : value
+          results.push({
+            type: 'value',
+            path: `${namespace}.${fullKey}`,
+            displayName: `${fullKey}: "${displayValue}"`,
+            matchedText: value,
+            highlight: { start: idx, end: idx + query.length },
+            relevance: this.calcRelevance(value, query, 'value')
+          })
+        }
+
+        // Recurse for nested objects
+        if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+          search(value as Record<string, unknown>, fullKey)
+        }
+      }
+    }
+    search(obj, '')
   }
 }
