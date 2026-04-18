@@ -4,6 +4,7 @@ import ProjectSelectPage from '@renderer/pages/ProjectSelect'
 import EditorPage from '@renderer/pages/Editor'
 import DetailEmpty from '@renderer/modules/detail/emply'
 import DetailPage from '@renderer/modules/detail'
+import LocaleEditorPage from '@renderer/modules/localeEditor'
 
 export const router = createHashRouter([
   {
@@ -17,6 +18,10 @@ export const router = createHashRouter([
       {
         index: true,
         Component: DetailEmpty
+      },
+      {
+        path: routerPaths.editorLocale,
+        Component: LocaleEditorPage
       },
       {
         path: routerPaths.editorFile,

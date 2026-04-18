@@ -34,11 +34,21 @@ export const api: ControllerHandler = {
     deleteFolder: (folderPath: string) => ipcRenderer.invoke('project:deleteFolder', folderPath),
     createLocale: (localeName: string) => ipcRenderer.invoke('project:createLocale', localeName),
     deleteLocale: (localeName: string) => ipcRenderer.invoke('project:deleteLocale', localeName),
+    getKeyTranslations: (namespace: string, key: string) =>
+      ipcRenderer.invoke('project:getKeyTranslations', namespace, key),
+    updateLocalizationValue: (namespace: string, key: string, locale: string, value: string) =>
+      ipcRenderer.invoke('project:updateLocalizationValue', namespace, key, locale, value),
+    getNamespaceContent: (namespace: string, locale: string) =>
+      ipcRenderer.invoke('project:getNamespaceContent', namespace, locale),
     deleteLocalizationKey: (namespace: string, key: string) =>
       ipcRenderer.invoke('project:deleteLocalizationKey', namespace, key),
     renameLocalizationKey: (namespace: string, oldKey: string, newKey: string) =>
       ipcRenderer.invoke('project:renameLocalizationKey', namespace, oldKey, newKey),
-    addLocalizationKey: (namespace: string, key: string, parentKey?: string) =>
-      ipcRenderer.invoke('project:addLocalizationKey', namespace, key, parentKey)
+    addLocalizationKey: (namespace: string, key: string, parentKey?: string, isParent?: boolean) =>
+      ipcRenderer.invoke('project:addLocalizationKey', namespace, key, parentKey, isParent),
+    getNamespaceOrphanKeys: (namespace: string) =>
+      ipcRenderer.invoke('project:getNamespaceOrphanKeys', namespace),
+    getAllNamespacesContent: (locale: string) =>
+      ipcRenderer.invoke('project:getAllNamespacesContent', locale)
   }
 }

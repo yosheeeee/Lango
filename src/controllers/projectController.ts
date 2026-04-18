@@ -110,12 +110,53 @@ ipcMain.handle('project:renameLocalizationKey', (_, namespace: string, oldKey: s
   return true
 })
 
-// Добавить новый ключ локализации во все файлы неймспейсов
-ipcMain.handle('project:addLocalizationKey', (_, namespace: string, key: string, parentKey?: string) => {
+// Получить переводы одного ключа по всем локалям
+ipcMain.handle('project:getKeyTranslations', (_, namespace: string, key: string) => {
+  const session = sessionService.getCurrentSession()
+  if (!session) return {}
+  const projectService = new ProjectService(session.path)
+  return projectService.getKeyTranslations(namespace, key)
+})
+
+// Обновить значение перевода для конкретной локали
+ipcMain.handle('project:updateLocalizationValue', (_, namespace: string, key: string, locale: string, value: string) => {
   const session = sessionService.getCurrentSession()
   if (!session) throw new Error('No active session')
   const projectService = new ProjectService(session.path)
-  projectService.addLocalizationKey(namespace, key, parentKey)
+  projectService.updateLocalizationValue(namespace, key, locale, value)
+  return true
+})
+
+// Получить содержимое неймспейса (ключи + значения) для конкретной локали
+ipcMain.handle('project:getNamespaceContent', (_, namespace: string, locale: string) => {
+  const session = sessionService.getCurrentSession()
+  if (!session) return {}
+  const projectService = new ProjectService(session.path)
+  return projectService.getNamespaceContent(namespace, locale)
+})
+
+// Получить содержимое всех неймспейсов для конкретной локали
+ipcMain.handle('project:getAllNamespacesContent', (_, locale: string) => {
+  const session = sessionService.getCurrentSession()
+  if (!session) return {}
+  const projectService = new ProjectService(session.path)
+  return projectService.getAllNamespacesContent(locale)
+})
+
+// Получить список ключей-сирот (отсутствующих в ≥1 локали) для неймспейса
+ipcMain.handle('project:getNamespaceOrphanKeys', (_, namespace: string) => {
+  const session = sessionService.getCurrentSession()
+  if (!session) return []
+  const projectService = new ProjectService(session.path)
+  return projectService.getNamespaceOrphanKeys(namespace)
+})
+
+// Добавить новый ключ локализации во все файлы неймспейсов
+ipcMain.handle('project:addLocalizationKey', (_, namespace: string, key: string, parentKey?: string, isParent?: boolean) => {
+  const session = sessionService.getCurrentSession()
+  if (!session) throw new Error('No active session')
+  const projectService = new ProjectService(session.path)
+  projectService.addLocalizationKey(namespace, key, parentKey, isParent)
   return true
 })
 
@@ -134,9 +175,20 @@ const projectServiceStub = {
   deleteFolder: (folderPath: string) => void folderPath,
   createLocale: (localeName: string) => void localeName,
   deleteLocale: (localeName: string) => void localeName,
+  getKeyTranslations: (namespace: string, key: string) =>
+    ({}) as ReturnType<ProjectService['getKeyTranslations']> & { _u: typeof namespace & typeof key },
+  updateLocalizationValue: (namespace: string, key: string, locale: string, value: string) =>
+    void (namespace + key + locale + value),
+  getNamespaceContent: (namespace: string, locale: string) =>
+    null as unknown as ReturnType<ProjectService['getNamespaceContent']> & { _unused: typeof namespace & typeof locale },
   deleteLocalizationKey: (namespace: string, key: string) => void (namespace + key),
   renameLocalizationKey: (namespace: string, oldKey: string, newKey: string) => void (namespace + oldKey + newKey),
-  addLocalizationKey: (namespace: string, key: string, parentKey?: string) => void (namespace + key + (parentKey ?? ''))
+  addLocalizationKey: (namespace: string, key: string, parentKey?: string, isParent?: boolean) =>
+    void (namespace + key + (parentKey ?? '') + String(isParent)),
+  getNamespaceOrphanKeys: (namespace: string) =>
+    null as unknown as string[] & { _u: typeof namespace },
+  getAllNamespacesContent: (locale: string) =>
+    null as unknown as ReturnType<ProjectService['getAllNamespacesContent']> & { _u: typeof locale }
 }
 /* eslint-enable @typescript-eslint/no-unused-vars */
 

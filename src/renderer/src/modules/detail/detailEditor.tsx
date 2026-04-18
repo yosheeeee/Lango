@@ -1,52 +1,158 @@
 import { Button } from '@renderer/components/button'
-import { ChevronUp, ListCollapseIcon, MoveLeft, MoveRight, Plus } from 'lucide-react'
+import { ToggleGroup, ToggleGroupItem } from '@renderer/components/toggleGroup'
+import { MoveLeft, MoveRight } from 'lucide-react'
 import { useFileTreeStore } from '@renderer/stores/fileTreeStore'
 import { FileTreeGroup, FileTreeItem } from 'src/domain/models/fileTree'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { routerPaths } from '@renderer/router/routerPaths'
-import EntryEditor, { CollabsibleTranslationsEntry } from './entryEditor'
+import EntryEditor, { AddKeyButton, CollabsibleTranslationsEntry } from './entryEditor'
 import { ActiveLocalizationSwitcher } from './activeLocalizationSwitcher'
+import { useLocalizationStore } from '@renderer/stores/localizationStore'
+import { NamespaceCtx } from './namespaceContext'
+
+type ValueEditorNode = {
+  namespace: string
+  translationKey: string
+  currentLocalizationValue: string
+}
+
+type CollapsibleNode = {
+  translationKey: string
+  childNodes: (CollapsibleNode | ValueEditorNode)[]
+}
+
+type FilterType = 'all' | 'empty' | 'orphan'
+
+function jsonToNodes(
+  obj: Record<string, unknown>,
+  namespace: string,
+  parentKey = ''
+): (CollapsibleNode | ValueEditorNode)[] {
+  return Object.entries(obj).map(([key, value]) => {
+    const fullKey = parentKey ? `${parentKey}.${key}` : key
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      return {
+        translationKey: fullKey,
+        childNodes: jsonToNodes(value as Record<string, unknown>, namespace, fullKey)
+      }
+    }
+    return {
+      namespace,
+      translationKey: fullKey,
+      currentLocalizationValue: typeof value === 'string' ? value : ''
+    }
+  })
+}
+
+function filterNodes(
+  nodes: (CollapsibleNode | ValueEditorNode)[],
+  filter: FilterType,
+  orphanKeys: Set<string>
+): (CollapsibleNode | ValueEditorNode)[] {
+  if (filter === 'all') return nodes
+  return nodes.reduce<(CollapsibleNode | ValueEditorNode)[]>((acc, node) => {
+    if ('childNodes' in node) {
+      const filtered = filterNodes(node.childNodes, filter, orphanKeys)
+      if (filtered.length > 0) acc.push({ ...node, childNodes: filtered })
+    } else {
+      const matches =
+        filter === 'empty'
+          ? node.currentLocalizationValue === ''
+          : filter === 'orphan'
+            ? orphanKeys.has(node.translationKey)
+            : true
+      if (matches) acc.push(node)
+    }
+    return acc
+  }, [])
+}
+
+function useNamespaceContent(namespace: string | undefined) {
+  const { currentLocale } = useLocalizationStore()
+  const [content, setContent] = useState<Record<string, unknown>>({})
+  const [orphanKeys, setOrphanKeys] = useState<Set<string>>(new Set())
+  const [version, setVersion] = useState(0)
+
+  const refresh = useCallback(() => setVersion((v) => v + 1), [])
+
+  useEffect(() => {
+    if (!namespace || !currentLocale) {
+      setContent({})
+      setOrphanKeys(new Set())
+      return
+    }
+    Promise.all([
+      window.api.project.getNamespaceContent(namespace, currentLocale),
+      window.api.project.getNamespaceOrphanKeys(namespace)
+    ]).then(([c, keys]) => {
+      setContent(c)
+      setOrphanKeys(new Set(keys))
+    })
+  }, [namespace, currentLocale, version])
+
+  return { content, orphanKeys, refresh }
+}
 
 export default function DetailEditor() {
+  const { filePath } = useParams<{ filePath: string }>()
+  const { content, orphanKeys, refresh } = useNamespaceContent(filePath)
+  const [filter, setFilter] = useState<FilterType>('all')
+
+  const nodes = useMemo(
+    () => (filePath ? jsonToNodes(content, filePath) : []),
+    [content, filePath]
+  )
+
+  const filteredNodes = useMemo(
+    () => filterNodes(nodes, filter, orphanKeys),
+    [nodes, filter, orphanKeys]
+  )
+
   return (
-    <section id="detail-editor" className="flex-1 h-full flex flex-col gap-2 p-3">
-      <div className="flex-1 h-full flex flex-col gap-4">
-        <div className="flex w-full items-center justify-between">
-          <div className="flex items-end gap-1">
-            <p className="text-xl">Current Localization:</p>
-            <ActiveLocalizationSwitcher />
+    <NamespaceCtx.Provider value={{ namespace: filePath ?? '', onRefresh: refresh }}>
+      <section id="detail-editor" className="flex-1 h-full flex flex-col gap-2 p-3">
+        <div className="flex-1 h-full flex flex-col gap-4 overflow-hidden">
+          <div className="flex w-full items-center justify-between">
+            <div className="flex items-end gap-2">
+              <p className="text-xl">Current Localization:</p>
+              <ActiveLocalizationSwitcher />
+            </div>
+            <div className="flex items-center gap-2">
+              <ToggleGroup
+                type="single"
+                value={filter}
+                onValueChange={(v) => v && setFilter(v as FilterType)}
+              >
+                <ToggleGroupItem value="all">Все ключи</ToggleGroupItem>
+                <ToggleGroupItem value="empty">Не заполненные</ToggleGroupItem>
+                <ToggleGroupItem value="orphan">Сироты</ToggleGroupItem>
+              </ToggleGroup>
+              <AddKeyButton />
+            </div>
           </div>
-          <Button size={'sm'}>
-            <Plus />
-            Add Key
-          </Button>
+          <div className="flex-1 overflow-y-auto flex flex-col gap-4">
+            {filteredNodes.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">
+                Ключи не найдены
+              </div>
+            ) : (
+              filteredNodes.map((node) =>
+                'childNodes' in node ? (
+                  <CollabsibleTranslationsEntry key={node.translationKey} {...node} />
+                ) : (
+                  <EntryEditor key={node.translationKey} {...node} />
+                )
+              )
+            )}
+          </div>
         </div>
-        <EntryEditor
-          namespace="auth"
-          currentLocalizationValue="hello guys"
-          translationKey="login.title"
-        />
-        <CollabsibleTranslationsEntry
-          translationKey="test"
-          childNodes={[
-            {
-              namespace: 'auth',
-              currentLocalizationValue: 'hello guys',
-              translationKey: 'auth.test'
-            }
-          ]}
-        />
-      </div>
-      <NavigateButtons />
-    </section>
+        <NavigateButtons />
+      </section>
+    </NamespaceCtx.Provider>
   )
 }
 
-/**
- * Рекурсивно собирает все link из FileTreeItem в плоский отсортированный массив.
- * Link имеет вид "/common", "/auth/login" — сохраняем как есть.
- */
 function flattenFileTree(items: (FileTreeGroup | FileTreeItem)[]): string[] {
   const links: string[] = []
 
@@ -73,7 +179,6 @@ function useNamespaceNavigation() {
 
   const currentIndex = useMemo(() => {
     if (!filePath) return -1
-    // filePath из useParams — это "common", а link в дереве — "/common"
     return namespaces.indexOf(`/${filePath}`)
   }, [namespaces, filePath])
 

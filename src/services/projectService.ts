@@ -363,6 +363,52 @@ export class ProjectService {
     return result
   }
 
+  getKeyTranslations(namespace: string, key: string): Record<string, string> {
+    const locales = this.getLocaleFolders()
+    const result: Record<string, string> = {}
+    const keyParts = key.split('.')
+
+    for (const locale of locales) {
+      const filePath = path.join(this.projectPath, locale, `${namespace}.json`)
+      try {
+        const content = fs.readFileSync(filePath, 'utf-8')
+        const json = JSON.parse(content)
+        const val = this.getNestedValue(json, keyParts)
+        result[locale] = typeof val === 'string' ? val : ''
+      } catch {
+        result[locale] = ''
+      }
+    }
+    return result
+  }
+
+  updateLocalizationValue(namespace: string, key: string, locale: string, value: string): void {
+    const filePath = path.join(this.projectPath, locale, `${namespace}.json`)
+    try {
+      const content = fs.readFileSync(filePath, 'utf-8')
+      const json = JSON.parse(content)
+      const keyParts = key.split('.')
+      const parent = keyParts.length > 1
+        ? this.getNestedValue(json, keyParts.slice(0, -1))
+        : json
+      if (!parent || typeof parent !== 'object' || Array.isArray(parent)) return
+      ;(parent as Record<string, unknown>)[keyParts[keyParts.length - 1]] = value
+      fs.writeFileSync(filePath, JSON.stringify(json, null, 2), 'utf-8')
+    } catch {
+      // ignore
+    }
+  }
+
+  getNamespaceContent(namespace: string, locale: string): Record<string, unknown> {
+    const filePath = path.join(this.projectPath, locale, `${namespace}.json`)
+    try {
+      const content = fs.readFileSync(filePath, 'utf-8')
+      return JSON.parse(content)
+    } catch {
+      return {}
+    }
+  }
+
   /**
    * Удаляет ключ (и все дочерние ключи если это объект) из JSON файла неймспейса во всех локалях.
    * @param namespace — путь без расширения, например "common" или "auth/login"
@@ -482,7 +528,7 @@ export class ProjectService {
    * @param key — имя нового ключа
    * @param parentKey (optional) — путь к родительскому ключу через точку, например "button.variants". Если не указан — ключ добавляется в корень
    */
-  addLocalizationKey(namespace: string, key: string, parentKey?: string): void {
+  addLocalizationKey(namespace: string, key: string, parentKey?: string, isParent = false): void {
     const locales = this.getLocaleFolders()
     if (locales.length === 0) throw new Error('No locale folders found')
 
@@ -504,14 +550,87 @@ export class ProjectService {
         // Проверяем что родитель существует и является объектом
         if (!parent || typeof parent !== 'object' || Array.isArray(parent)) continue
 
-        // Добавляем новый ключ с пустым значением
-        parent[key] = ''
+        parent[key] = isParent ? {} : ''
 
         fs.writeFileSync(filePath, JSON.stringify(json, null, 2), 'utf-8')
       } catch {
         // ignore invalid JSON or missing files
       }
     }
+  }
+
+  getAllNamespacesContent(locale: string): Record<string, Record<string, unknown>> {
+    const locales = this.getLocaleFolders()
+    if (!locales.includes(locale)) return {}
+
+    const localePath = path.join(this.projectPath, locale)
+    const result: Record<string, Record<string, unknown>> = {}
+
+    const collect = (dirPath: string, relativeDir: string) => {
+      try {
+        const entries = fs.readdirSync(dirPath, { withFileTypes: true })
+        for (const entry of entries) {
+          if (this.isSystemFile(entry.name)) continue
+          if (entry.isDirectory()) {
+            const sub = relativeDir ? `${relativeDir}/${entry.name}` : entry.name
+            collect(path.join(dirPath, entry.name), sub)
+          } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.json')) {
+            const nameWithoutExt = entry.name.replace(/\.json$/i, '')
+            const namespace = relativeDir ? `${relativeDir}/${nameWithoutExt}` : nameWithoutExt
+            try {
+              const content = fs.readFileSync(path.join(dirPath, entry.name), 'utf-8')
+              result[namespace] = JSON.parse(content)
+            } catch {
+              result[namespace] = {}
+            }
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    collect(localePath, '')
+    return result
+  }
+
+  getNamespaceOrphanKeys(namespace: string): string[] {
+    const locales = this.getLocaleFolders()
+    if (locales.length === 0) return []
+
+    const keyLocales = new Map<string, Set<string>>()
+
+    for (const locale of locales) {
+      const filePath = path.join(this.projectPath, locale, `${namespace}.json`)
+      try {
+        const content = fs.readFileSync(filePath, 'utf-8')
+        const json = JSON.parse(content)
+        const leafKeys = this.flattenLeafKeys(json, '')
+        for (const key of leafKeys) {
+          if (!keyLocales.has(key)) keyLocales.set(key, new Set())
+          keyLocales.get(key)!.add(locale)
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    return [...keyLocales.entries()]
+      .filter(([, set]) => set.size < locales.length)
+      .map(([key]) => key)
+  }
+
+  private flattenLeafKeys(obj: Record<string, unknown>, prefix: string): string[] {
+    const keys: string[] = []
+    for (const [k, v] of Object.entries(obj)) {
+      const fullKey = prefix ? `${prefix}.${k}` : k
+      if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
+        keys.push(...this.flattenLeafKeys(v as Record<string, unknown>, fullKey))
+      } else {
+        keys.push(fullKey)
+      }
+    }
+    return keys
   }
 
   /**

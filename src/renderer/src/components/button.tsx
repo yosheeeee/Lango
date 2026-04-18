@@ -18,7 +18,7 @@ const buttonVariants = cva(
       size: {
         md: 'text-md py-2 px-4',
         lg: 'text-lg py-3 px-6',
-        sm: 'text-sm p-2',
+        sm: 'text-sm px-2 py-1.5',
         unset: ''
       },
       weight: {

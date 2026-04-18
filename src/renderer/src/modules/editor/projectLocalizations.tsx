@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import LocaleIcon from '@renderer/components/localeIcon'
 import { ResizablePanel } from '@renderer/components/resizable'
 import { useSessionStore } from '@renderer/stores/sessionStore'
 import { useLocalizationStore } from '@renderer/stores/localizationStore'
 import { useTranslation } from 'react-i18next'
 import { Globe, Plus, Trash2 } from 'lucide-react'
+import { routerPaths } from '@renderer/router/routerPaths'
 import {
   Dialog,
   DialogContent,
@@ -141,10 +143,13 @@ function LocalizationNode({
   return (
     <>
       <div className="flex items-center gap-2 py-1 px-2 group justify-between">
-        <div className="flex items-center gap-2">
+        <Link
+          to={`${routerPaths.editor}/locale/${name}`}
+          className="flex items-center gap-2 flex-1 hover:text-white transition-colors"
+        >
           <LocaleIcon locale={name} className="size-[20px] rounded-md" />
           <p>{name}</p>
-        </div>
+        </Link>
         {canDelete && (
           <button
             data-delete-btn=""
