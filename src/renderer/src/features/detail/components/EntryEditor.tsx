@@ -439,8 +439,12 @@ export function CollabsibleTranslationsEntry({
           </div>
         </div>
         <CollapsibleContent className="pl-1.5 border-l border-l-gray-700 ml-3 flex flex-col gap-3 pt-2">
-          {childNodes?.map((n) =>
-            'namespace' in n ? <EntryEditor {...n} /> : <CollabsibleTranslationsEntry {...n} />
+          {childNodes?.map((n, idx) =>
+            'namespace' in n ? (
+              <EntryEditor key={idx} {...n} />
+            ) : (
+              <CollabsibleTranslationsEntry key={idx} {...n} />
+            )
           )}
         </CollapsibleContent>
       </Collapsible>
