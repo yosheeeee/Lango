@@ -6,11 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { routerPaths } from '@renderer/router/routerPaths'
 import { useLocalizationStore } from '@renderer/stores/localizationStore'
-import {
-  Popover,
-  PopoverAnchor,
-  PopoverContent
-} from '@renderer/components/popover'
+import { Popover, PopoverAnchor, PopoverContent } from '@renderer/components/popover'
 
 type SearchMatch = {
   type: 'namespace' | 'key' | 'value' | 'locale'
@@ -186,11 +182,11 @@ export const ProjectSearch: FC = () => {
       </PopoverAnchor>
 
       <PopoverContent
-        align="start"
+        align="center"
         sideOffset={4}
         onOpenAutoFocus={(e) => e.preventDefault()}
         onCloseAutoFocus={(e) => e.preventDefault()}
-        className="w-(--radix-popover-trigger-width) min-w-80 p-1 max-h-80 overflow-y-auto"
+        className="w-(--radix-popper-anchor-width) min-w-max p-1 max-h-80 overflow-y-auto"
       >
         {results.map((item, idx) => {
           const Icon = typeIcons[item.type]

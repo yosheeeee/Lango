@@ -4,7 +4,11 @@ import { ChevronUp } from 'lucide-react'
 import { Button } from '@renderer/components/button'
 import { MoveLeft, MoveRight } from 'lucide-react'
 import { ToggleGroup, ToggleGroupItem } from '@renderer/components/toggleGroup'
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@renderer/components/collapsible'
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent
+} from '@renderer/components/collapsible'
 import { useLocalizationStore } from '@renderer/stores/localizationStore'
 import { useFileTreeStore } from '@renderer/stores/fileTreeStore'
 import { FileTreeGroup, FileTreeItem } from 'src/domain/models/fileTree'
@@ -17,6 +21,7 @@ type ValueEditorNode = {
   namespace: string
   translationKey: string
   currentLocalizationValue: string
+  isOrphan?: boolean
 }
 
 type CollapsibleNode = {
@@ -29,20 +34,22 @@ type FilterType = 'all' | 'empty' | 'orphan'
 function jsonToNodes(
   obj: Record<string, unknown>,
   namespace: string,
-  parentKey = ''
+  parentKey = '',
+  orphanKeys: Set<string>
 ): (CollapsibleNode | ValueEditorNode)[] {
   return Object.entries(obj).map(([key, value]) => {
     const fullKey = parentKey ? `${parentKey}.${key}` : key
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       return {
         translationKey: fullKey,
-        childNodes: jsonToNodes(value as Record<string, unknown>, namespace, fullKey)
+        childNodes: jsonToNodes(value as Record<string, unknown>, namespace, fullKey, orphanKeys)
       }
     }
     return {
       namespace,
       translationKey: fullKey,
-      currentLocalizationValue: typeof value === 'string' ? value : ''
+      currentLocalizationValue: typeof value === 'string' ? value : '',
+      isOrphan: orphanKeys.has(fullKey) || undefined
     }
   })
 }
@@ -64,7 +71,7 @@ function filterNodes(
           : filter === 'orphan'
             ? orphanKeys.has(node.translationKey)
             : true
-      if (matches) acc.push(node)
+      if (matches) acc.push({ ...node, isOrphan: orphanKeys.has(node.translationKey) || undefined })
     }
     return acc
   }, [])
@@ -156,7 +163,10 @@ function NamespaceSection({
 }) {
   const [open, setOpen] = useState(true)
 
-  const nodes = useMemo(() => jsonToNodes(content, namespace), [content, namespace])
+  const nodes = useMemo(
+    () => jsonToNodes(content, namespace, '', orphanKeys),
+    [content, namespace, orphanKeys]
+  )
   const filteredNodes = useMemo(
     () => filterNodes(nodes, filter, orphanKeys),
     [nodes, filter, orphanKeys]
@@ -165,12 +175,8 @@ function NamespaceSection({
   if (filter !== 'all' && filteredNodes.length === 0) return null
 
   return (
-    <NamespaceCtx.Provider value={{ namespace, onRefresh }}>
-      <Collapsible
-        open={open}
-        onOpenChange={setOpen}
-        className="group flex flex-col gap-2"
-      >
+    <NamespaceCtx.Provider value={{ namespace, onRefresh, orphanKeys }}>
+      <Collapsible open={open} onOpenChange={setOpen} className="group flex flex-col gap-2">
         <CollapsibleTrigger asChild>
           <div className="flex items-center gap-2 cursor-pointer px-1 py-0.5 rounded hover:bg-gray-800 select-none">
             <ChevronUp
@@ -228,10 +234,7 @@ export default function LocaleEditor() {
   const { allContent, orphanKeysMap, refresh } = useLocaleContent(localeName)
   const [filter, setFilter] = useState<FilterType>('all')
 
-  const namespaces = useMemo(
-    () => (root ? flattenNamespaces(root.nestedItems) : []),
-    [root]
-  )
+  const namespaces = useMemo(() => (root ? flattenNamespaces(root.nestedItems) : []), [root])
 
   const orderedContent = useMemo(
     () =>
@@ -243,8 +246,8 @@ export default function LocaleEditor() {
 
   const hasAnyVisible = orderedContent.some(({ namespace, content }) => {
     if (filter === 'all') return Object.keys(content).length > 0
-    const nodes = jsonToNodes(content, namespace)
     const orphanKeys = orphanKeysMap[namespace] ?? new Set<string>()
+    const nodes = jsonToNodes(content, namespace, '', orphanKeys)
     return filterNodes(nodes, filter, orphanKeys).length > 0
   })
 

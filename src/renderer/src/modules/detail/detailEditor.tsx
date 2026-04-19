@@ -15,6 +15,7 @@ type ValueEditorNode = {
   namespace: string
   translationKey: string
   currentLocalizationValue: string
+  isOrphan?: boolean
 }
 
 type CollapsibleNode = {
@@ -27,20 +28,22 @@ type FilterType = 'all' | 'empty' | 'orphan'
 function jsonToNodes(
   obj: Record<string, unknown>,
   namespace: string,
-  parentKey = ''
+  parentKey = '',
+  orphanKeys: Set<string>
 ): (CollapsibleNode | ValueEditorNode)[] {
   return Object.entries(obj).map(([key, value]) => {
     const fullKey = parentKey ? `${parentKey}.${key}` : key
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       return {
         translationKey: fullKey,
-        childNodes: jsonToNodes(value as Record<string, unknown>, namespace, fullKey)
+        childNodes: jsonToNodes(value as Record<string, unknown>, namespace, fullKey, orphanKeys)
       }
     }
     return {
       namespace,
       translationKey: fullKey,
-      currentLocalizationValue: typeof value === 'string' ? value : ''
+      currentLocalizationValue: typeof value === 'string' ? value : '',
+      isOrphan: orphanKeys.has(fullKey) || undefined
     }
   })
 }
@@ -62,7 +65,7 @@ function filterNodes(
           : filter === 'orphan'
             ? orphanKeys.has(node.translationKey)
             : true
-      if (matches) acc.push(node)
+      if (matches) acc.push({ ...node, isOrphan: orphanKeys.has(node.translationKey) || undefined })
     }
     return acc
   }, [])
@@ -100,8 +103,8 @@ export default function DetailEditor() {
   const [filter, setFilter] = useState<FilterType>('all')
 
   const nodes = useMemo(
-    () => (filePath ? jsonToNodes(content, filePath) : []),
-    [content, filePath]
+    () => (filePath ? jsonToNodes(content, filePath, '', orphanKeys) : []),
+    [content, filePath, orphanKeys]
   )
 
   const filteredNodes = useMemo(
@@ -110,7 +113,7 @@ export default function DetailEditor() {
   )
 
   return (
-    <NamespaceCtx.Provider value={{ namespace: filePath ?? '', onRefresh: refresh }}>
+    <NamespaceCtx.Provider value={{ namespace: filePath ?? '', onRefresh: refresh, orphanKeys }}>
       <section id="detail-editor" className="flex-1 h-full flex flex-col gap-2 p-3">
         <div className="flex-1 h-full flex flex-col gap-4 overflow-hidden">
           <div className="flex w-full items-center justify-between">

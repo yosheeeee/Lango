@@ -157,6 +157,15 @@ ipcMain.handle('project:getNamespaceOrphanKeys', (_, namespace: string) => {
   return projectService.getNamespaceOrphanKeys(namespace)
 })
 
+// Исправить ключ-сироту (добавить в недостающие локали)
+ipcMain.handle('project:fixOrphanKey', (_, namespace: string, key: string) => {
+  const session = sessionService.getCurrentSession()
+  if (!session) throw new Error('No active session')
+  const projectService = new ProjectService(session.path)
+  projectService.fixOrphanKey(namespace, key)
+  return true
+})
+
 // Добавить новый ключ локализации во все файлы неймспейсов
 ipcMain.handle(
   'project:addLocalizationKey',
@@ -208,6 +217,7 @@ const projectServiceStub = {
     void (namespace + key + (parentKey ?? '') + String(isParent)),
   getNamespaceOrphanKeys: (namespace: string) =>
     null as unknown as string[] & { _u: typeof namespace },
+  fixOrphanKey: (namespace: string, key: string) => void (namespace + key),
   getAllNamespacesContent: (locale: string) =>
     null as unknown as ReturnType<ProjectService['getAllNamespacesContent']> & {
       _u: typeof locale

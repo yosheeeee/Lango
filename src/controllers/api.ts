@@ -48,6 +48,8 @@ export const api: ControllerHandler = {
       ipcRenderer.invoke('project:addLocalizationKey', namespace, key, parentKey, isParent),
     getNamespaceOrphanKeys: (namespace: string) =>
       ipcRenderer.invoke('project:getNamespaceOrphanKeys', namespace),
+    fixOrphanKey: (namespace: string, key: string) =>
+      ipcRenderer.invoke('project:fixOrphanKey', namespace, key),
     getAllNamespacesContent: (locale: string) =>
       ipcRenderer.invoke('project:getAllNamespacesContent', locale),
     search: (query: string, _limit = 50, _offset = 0) =>

@@ -23,7 +23,18 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/tooltip'
 import { Button } from '@renderer/components/button'
 import { cn } from '@renderer/utils/cn'
-import { Check, ChevronUp, FolderPlus, Globe, Pencil, Plus, Trash, Type, X } from 'lucide-react'
+import {
+  Check,
+  ChevronUp,
+  FolderPlus,
+  Globe,
+  Pencil,
+  Plus,
+  Trash,
+  Type,
+  Wrench,
+  X
+} from 'lucide-react'
 import { ComponentProps, FC, useContext, useEffect, useRef, useState } from 'react'
 import { DropdownMenu as DropdownMenuPrimitive } from 'radix-ui'
 import { NamespaceCtx } from './namespaceContext'
@@ -34,6 +45,7 @@ export default function EntryEditor({
   namespace,
   translationKey,
   currentLocalizationValue,
+  isOrphan,
   className,
   ...props
 }: EntryEditorProps) {
@@ -70,6 +82,7 @@ export default function EntryEditor({
           namespace={namespace}
           translationKey={translationKey}
           currentLocalizationValue={currentLocalizationValue}
+          isOrphan={isOrphan}
         />
       )}
     </div>
@@ -80,9 +93,10 @@ type ValueEditorProps = {
   namespace: string
   translationKey: string
   currentLocalizationValue: string
+  isOrphan?: boolean
 }
 
-function ValueEditor({ currentLocalizationValue, translationKey }: ValueEditorProps) {
+function ValueEditor({ currentLocalizationValue, translationKey, isOrphan }: ValueEditorProps) {
   const ctx = useContext(NamespaceCtx)
   const { currentLocale } = useLocalizationStore()
   const [value, setValue] = useState(currentLocalizationValue)
@@ -116,6 +130,12 @@ function ValueEditor({ currentLocalizationValue, translationKey }: ValueEditorPr
     ctx.onRefresh()
   }
 
+  async function handleFixOrphan() {
+    if (!ctx) return
+    await window.api.project.fixOrphanKey(ctx.namespace, translationKey)
+    ctx.onRefresh()
+  }
+
   return (
     <>
       <div className="flex gap-2 items-center">
@@ -128,27 +148,39 @@ function ValueEditor({ currentLocalizationValue, translationKey }: ValueEditorPr
                 onKeyDown={(e) => e.key === 'Enter' && handleSave()}
                 className={cn(
                   'flex-1 rounded-r-none focus-visible:ring-0',
-                  !isDirty && 'rounded-r-none'
+                  !isDirty && 'rounded-r-none',
+                  isOrphan && 'border-orange-500'
                 )}
               />
               {isDirty && (
                 <>
                   <button
                     onClick={handleSave}
-                    className="shrink-0 size-9 flex items-center justify-center [&>svg]:size-5 cursor-pointer text-gray-400 bg-gray-800 hover:bg-green-900 hover:text-green-300 transition-colors border border-l-0 border-gray-600"
+                    className={cn(
+                      'shrink-0 size-9 flex items-center justify-center [&>svg]:size-5 cursor-pointer text-gray-400 bg-gray-800 hover:bg-green-900 hover:text-green-300 transition-colors border border-l-0 border-gray-600',
+                      isOrphan && 'border-orange-500'
+                    )}
                   >
                     <Check />
                   </button>
                   <button
                     onClick={handleCancel}
-                    className="shrink-0 size-9 flex items-center justify-center [&>svg]:size-5 cursor-pointer text-gray-400 bg-gray-800 hover:bg-gray-700 transition-colors border border-l-0 border-gray-600"
+                    className={cn(
+                      'shrink-0 size-9 flex items-center justify-center [&>svg]:size-5 cursor-pointer text-gray-400 bg-gray-800 hover:bg-gray-700 transition-colors border border-l-0 border-gray-600',
+                      isOrphan && 'border-orange-500'
+                    )}
                   >
                     <X />
                   </button>
                 </>
               )}
               <PopoverTrigger asChild>
-                <button className="shrink-0 size-9 flex items-center justify-center text-gray-400 bg-gray-800 hover:bg-transparent border-gray-600 border border-l-0 rounded-r-md cursor-pointer [&>svg]:size-5 transition-colors">
+                <button
+                  className={cn(
+                    'shrink-0 size-9 flex items-center justify-center text-gray-400 bg-gray-800 hover:bg-transparent border-gray-600 border border-l-0 rounded-r-md cursor-pointer [&>svg]:size-5 transition-colors',
+                    isOrphan && 'border-orange-500'
+                  )}
+                >
                   <Globe />
                 </button>
               </PopoverTrigger>
@@ -163,6 +195,21 @@ function ValueEditor({ currentLocalizationValue, translationKey }: ValueEditorPr
             )}
           </PopoverContent>
         </Popover>
+        {isOrphan && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <EditRowButton
+                onClick={handleFixOrphan}
+                className="text-gray-400 rounded-md hover:bg-orange-900 hover:text-orange-300 transition-colors cursor-pointer"
+              >
+                <Wrench />
+              </EditRowButton>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              <p>Fix orphan key</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
         <Tooltip>
           <TooltipTrigger asChild>
             <EditRowButton

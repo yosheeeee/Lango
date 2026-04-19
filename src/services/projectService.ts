@@ -389,9 +389,7 @@ export class ProjectService {
       const content = fs.readFileSync(filePath, 'utf-8')
       const json = JSON.parse(content)
       const keyParts = key.split('.')
-      const parent = keyParts.length > 1
-        ? this.getNestedValue(json, keyParts.slice(0, -1))
-        : json
+      const parent = keyParts.length > 1 ? this.getNestedValue(json, keyParts.slice(0, -1)) : json
       if (!parent || typeof parent !== 'object' || Array.isArray(parent)) return
       ;(parent as Record<string, unknown>)[keyParts[keyParts.length - 1]] = value
       fs.writeFileSync(filePath, JSON.stringify(json, null, 2), 'utf-8')
@@ -460,7 +458,12 @@ export class ProjectService {
     }
 
     // Если ключ не существует или не является объектом — не найдено
-    if (!(firstPart in obj) || typeof obj[firstPart] !== 'object' || obj[firstPart] === null || Array.isArray(obj[firstPart])) {
+    if (
+      !(firstPart in obj) ||
+      typeof obj[firstPart] !== 'object' ||
+      obj[firstPart] === null ||
+      Array.isArray(obj[firstPart])
+    ) {
       return false
     }
 
@@ -544,9 +547,7 @@ export class ProjectService {
         const json = JSON.parse(content)
 
         // Находим родительский объект (или корень, если parentKey не указан)
-        const parent = parentParts.length > 0
-          ? this.getNestedValue(json, parentParts)
-          : json
+        const parent = parentParts.length > 0 ? this.getNestedValue(json, parentParts) : json
 
         // Проверяем что родитель существует и является объектом
         if (!parent || typeof parent !== 'object' || Array.isArray(parent)) continue
@@ -619,6 +620,33 @@ export class ProjectService {
     return [...keyLocales.entries()]
       .filter(([, set]) => set.size < locales.length)
       .map(([key]) => key)
+  }
+
+  fixOrphanKey(namespace: string, key: string): void {
+    const locales = this.getLocaleFolders()
+    const keyParts = key.split('.')
+
+    for (const locale of locales) {
+      const filePath = path.join(this.projectPath, locale, `${namespace}.json`)
+      try {
+        if (!fs.existsSync(filePath)) continue
+
+        const content = fs.readFileSync(filePath, 'utf-8')
+        const json = JSON.parse(content)
+
+        const existingValue = this.getNestedValue(json, keyParts)
+        if (existingValue === undefined) {
+          const parent =
+            keyParts.length > 1 ? this.getNestedValue(json, keyParts.slice(0, -1)) : json
+          if (parent && typeof parent === 'object' && !Array.isArray(parent)) {
+            ;(parent as Record<string, unknown>)[keyParts[keyParts.length - 1]] = ''
+            fs.writeFileSync(filePath, JSON.stringify(json, null, 2), 'utf-8')
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
   }
 
   private flattenLeafKeys(obj: Record<string, unknown>, prefix: string): string[] {
@@ -749,7 +777,11 @@ export class ProjectService {
     }
 
     // 2. Collect all namespace files and search
-    const namespaceFiles: { namespace: string; locale: string; content: Record<string, unknown> }[] = []
+    const namespaceFiles: {
+      namespace: string
+      locale: string
+      content: Record<string, unknown>
+    }[] = []
 
     for (const locale of locales) {
       const localePath = path.join(this.projectPath, locale)
