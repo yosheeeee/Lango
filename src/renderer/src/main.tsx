@@ -7,11 +7,14 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider } from 'react-router-dom'
 import { router } from './router'
-import './utils/i18n' // Import without assigning to variable since it initializes automatically
+import { initI18n } from './utils/i18n'
+import { initializeSessionStore } from './stores/sessionStore'
+import { initializeLanguageStore } from './stores/languageStore'
 
 async function startApp(): Promise<void> {
-  // Wait for i18n to initialize before rendering the app
-  await import('./utils/i18n')
+  const language = await initializeLanguageStore()
+  await initI18n(language)
+  await initializeSessionStore()
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>

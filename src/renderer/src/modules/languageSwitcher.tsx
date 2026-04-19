@@ -9,6 +9,7 @@ import { ChevronDown } from 'lucide-react'
 import { ComponentProps, FC, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Language } from 'src/domain/models/currentLanguage'
+import { useLanguageStore } from '@renderer/stores/languageStore'
 
 const languageTitles: Record<Language, string> = {
   en: 'ENG',
@@ -23,13 +24,15 @@ export const LanguageSwitcher: FC<
   }
 > = ({ optionProps, menuProps, className, selectedContainerClassName, ...props }) => {
   const { i18n } = useTranslation()
-  const [currentLanguage, setCurrentLanguage] = useState<Language>(window.currentLanguage || 'ru')
+  const { currentLanguage, setCurrentLanguage } = useLanguageStore()
+  const [language, setLanguage] = useState<Language>(currentLanguage || 'ru')
 
   const onSelectLanguage = async (lang: Language): Promise<void> => {
     try {
       await window.api.currentLanguage.setCurrentLanguage(lang)
       i18n.changeLanguage(lang)
       setCurrentLanguage(lang)
+      setLanguage(lang)
     } catch (error) {
       console.error('Error setting language:', error)
     }
@@ -39,7 +42,7 @@ export const LanguageSwitcher: FC<
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <div className={cn('flex gap-2 items-center pr-2', className)} {...props}>
-          <LanguageComponent language={currentLanguage} className={selectedContainerClassName} />
+          <LanguageComponent language={language} className={selectedContainerClassName} />
           <ChevronDown className="size-4 group-data-[state=open]:rotate-180 transition-transform" />
         </div>
       </DropdownMenuTrigger>

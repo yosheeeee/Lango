@@ -16,8 +16,18 @@ type SessionAcitons = {
 type SessionStore = SessionState & SessionAcitons
 
 const initialState: SessionState = {
-  currentSession: window.currentSession,
-  sessions: window.sessions
+  currentSession: null,
+  sessions: null
+}
+
+export async function initializeSessionStore(): Promise<void> {
+  try {
+    const sessions = await window.api.session.getSessions()
+    const currentSession = await window.api.session.getCurrentSession()
+    useSessionStore.setState({ sessions: sessions ?? [], currentSession })
+  } catch {
+    useSessionStore.setState({ sessions: [], currentSession: null })
+  }
 }
 
 export const useSessionStore = create<SessionStore>()((set) => ({
