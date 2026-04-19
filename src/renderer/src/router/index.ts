@@ -2,9 +2,9 @@ import { createHashRouter } from 'react-router-dom'
 import { routerPaths } from './routerPaths'
 import ProjectSelectPage from '@renderer/pages/ProjectSelect'
 import EditorPage from '@renderer/pages/Editor'
-import DetailEmpty from '@renderer/modules/detail/emply'
-import DetailPage from '@renderer/modules/detail'
-import LocaleEditorPage from '@renderer/modules/localeEditor'
+import DetailEmpty from '@renderer/features/detail/emply'
+import DetailPage from '@renderer/features/detail/index'
+import LocaleEditorPage from '@renderer/features/localeEditor/index'
 
 export const router = createHashRouter([
   {

@@ -1,5 +1,9 @@
 {
   "welcomeMessage": "Добро пожаловать в редактор",
+  "detailEmpty": {
+    "title": "Выберите файл для редактирования",
+    "description": "Выберите JSON файл из дерева слева"
+  },
   "fileTree": {
     "newFile": "Новый файл",
     "newFolder": "Новая папка",

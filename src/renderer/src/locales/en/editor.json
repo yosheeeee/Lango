@@ -1,5 +1,9 @@
 {
   "welcomeMessage": "Welcome to the editor",
+  "detailEmpty": {
+    "title": "Select a file to edit",
+    "description": "Choose a JSON file from the tree on the left"
+  },
   "fileTree": {
     "newFile": "New file",
     "newFolder": "New folder",

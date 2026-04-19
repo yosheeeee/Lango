@@ -1,4 +1,4 @@
-import KeybindsCheetSheet from '@renderer/modules/editor/keybindsCheetSheet'
+import KeybindsCheetSheet from '@renderer/features/editor/keybindsCheetSheet'
 import { PropsWithChildren, useEffect } from 'react'
 import { keyBinds } from './keyBinds'
 import { tinykeys } from 'tinykeys'

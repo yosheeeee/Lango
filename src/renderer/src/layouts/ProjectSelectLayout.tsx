@@ -1,4 +1,4 @@
-import { ProjectsProvider } from '@renderer/providers/ProjectsProvider'
+import { ProjectsProvider } from '@renderer/stores/providers/ProjectsProvider'
 import { routerPaths } from '@renderer/router/routerPaths'
 import { useSessionStore } from '@renderer/stores/sessionStore'
 import { cn } from '@renderer/utils/cn'

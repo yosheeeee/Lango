@@ -1,4 +1,4 @@
-import { TooltipProvider } from '@renderer/components/tooltip'
+import { TooltipProvider } from '@renderer/components/ui/tooltip'
 import KeybindsProvider from '@renderer/providers/KeybindsProvider'
 import { routerPaths } from '@renderer/router/routerPaths'
 import { useSessionStore } from '@renderer/stores/sessionStore'

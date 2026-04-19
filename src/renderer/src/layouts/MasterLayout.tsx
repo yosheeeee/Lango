@@ -2,9 +2,8 @@ import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup
-} from '@renderer/components/resizable'
-import ProjectLocalizations from '@renderer/modules/editor/projectLocalizations'
-import ProjectTree from '@renderer/modules/editor/projectTree'
+} from '@renderer/components/ui/resizable'
+import { ProjectLocalizations, ProjectTree } from '@renderer/features/editor'
 import { useEditorStore } from '@renderer/stores/visibilityStore'
 import { cn } from '@renderer/utils/cn'
 import { FC } from 'react'
