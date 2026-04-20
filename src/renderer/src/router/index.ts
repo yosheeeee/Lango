@@ -1,11 +1,13 @@
+import { lazy } from 'react'
 import { createHashRouter } from 'react-router-dom'
 import { routerPaths } from './routerPaths'
-import ProjectSelectPage from '@renderer/pages/ProjectSelect'
-import EditorPage from '@renderer/pages/Editor'
-import DetailEmpty from '@renderer/features/detail/emply'
-import DetailPage from '@renderer/features/detail/index'
-import LocaleEditorPage from '@renderer/features/localeEditor/index'
-import AnalyzePage from '@renderer/features/analyze'
+
+const ProjectSelectPage = lazy(() => import('@renderer/pages/ProjectSelect'))
+const EditorPage = lazy(() => import('@renderer/pages/Editor'))
+const DetailEmpty = lazy(() => import('@renderer/features/detail/emply'))
+const DetailPage = lazy(() => import('@renderer/features/detail/index'))
+const LocaleEditorPage = lazy(() => import('@renderer/features/localeEditor/index'))
+const AnalyzePage = lazy(() => import('@renderer/features/analyze'))
 
 export const router = createHashRouter([
   {

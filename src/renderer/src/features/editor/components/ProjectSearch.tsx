@@ -1,5 +1,5 @@
 import { Input } from '@renderer/components/form'
-import { useEditorStore } from '@renderer/stores/visibilityStore'
+import { searchInputRef } from '@renderer/stores/visibilityStore'
 import { Search, FileJson2, Braces, Languages, Globe } from 'lucide-react'
 import { FC, useEffect, useState, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -58,7 +58,6 @@ function HighlightMatch({
 
 export const ProjectSearch: FC = () => {
   const { t } = useTranslation('projectSearch')
-  const { searchRef } = useEditorStore()
   const navigate = useNavigate()
   const { setCurrentLocale } = useLocalizationStore()
 
@@ -163,7 +162,7 @@ export const ProjectSearch: FC = () => {
       <PopoverAnchor asChild>
         <div className="relative">
           <Input
-            ref={searchRef}
+            ref={searchInputRef}
             placeholder={t('searchPlaceholder')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}

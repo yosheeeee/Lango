@@ -1,11 +1,9 @@
-import React, { RefObject } from 'react'
+import { createRef } from 'react'
 import { create } from 'zustand'
 
 type VisibilityState = {
   cheetSheet: boolean
   masterPanel: boolean
-  searchRef: RefObject<HTMLInputElement | null>
-  projectTreeRef: RefObject<HTMLDivElement | null>
 }
 
 type VisibilityActions = {
@@ -16,37 +14,19 @@ type VisibilityActions = {
 }
 type VisibilityStore = VisibilityState & VisibilityActions
 
-export const useEditorStore = create<VisibilityStore>()((set, get) => ({
+const searchInputRef = createRef<HTMLInputElement>()
+const treePanelRef = createRef<HTMLDivElement>()
+
+export const useEditorStore = create<VisibilityStore>()((set) => ({
   cheetSheet: false,
   masterPanel: true,
-  searchRef: React.createRef<HTMLInputElement>(),
-  projectTreeRef: React.createRef<HTMLDivElement>(),
-  toggleMaster: () => {
-    let newState = false
-    set((prev) => {
-      newState = !prev.masterPanel
-      return {
-        masterPanel: newState
-      }
-    })
-    if (newState) {
-      requestAnimationFrame(() => {
-        get().projectTreeRef.current?.focus()
-      })
-    }
-  },
+  toggleMaster: () => set((prev) => ({ masterPanel: !prev.masterPanel })),
   setCheetSheet: (newVal: boolean) => set({ cheetSheet: newVal }),
-  toggleCheetSheet: () =>
-    set((prev) => ({
-      cheetSheet: !prev.cheetSheet
-    })),
+  toggleCheetSheet: () => set((prev) => ({ cheetSheet: !prev.cheetSheet })),
   toggleSearch: () => {
-    const searchInput = get().searchRef.current
-    if (!searchInput) return
-    if (document.activeElement === searchInput) {
-      searchInput.blur()
-    } else {
-      searchInput.focus()
-    }
+    if (!searchInputRef.current) return
+    searchInputRef.current.focus()
   }
 }))
+
+export { searchInputRef, treePanelRef }

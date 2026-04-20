@@ -6,3 +6,5 @@ out
 *.log*
 /.idea
 /.kilo/plans
+*.tsbuildinfo
+package-lock.json

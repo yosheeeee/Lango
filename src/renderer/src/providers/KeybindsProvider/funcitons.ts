@@ -1,23 +1,17 @@
-import { useEditorStore } from '@renderer/stores/visibilityStore'
+import { useEditorStore, treePanelRef, searchInputRef } from '@renderer/stores/visibilityStore'
 
 export const keybindFunctions = {
   'master.toggle'() {
     useEditorStore.getState().toggleMaster()
   },
   'projectTree.focus'() {
-    const { masterPanel, projectTreeRef, toggleMaster } = useEditorStore.getState()
-    if (!masterPanel) {
-      toggleMaster()
-      requestAnimationFrame(() => projectTreeRef?.current?.focus())
-    } else {
-      projectTreeRef?.current?.focus()
-    }
+    treePanelRef.current?.focus()
   },
   'cheatSheet.toggle'() {
     useEditorStore.getState().toggleCheetSheet()
   },
   'search.toggle'() {
-    useEditorStore.getState().toggleSearch()
+    searchInputRef.current?.focus()
   },
   'projectTree.newItem'() {
     const active = document.activeElement as HTMLElement

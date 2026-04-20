@@ -45,11 +45,9 @@ const initialState: FileTreeState = {
   isLoading: false
 }
 
-export const useFileTreeStore = create<FileTreeStore>()((set) => ({
-  ...initialState,
-
-  fetchTree: async () => {
-    set({ isLoading: true })
+export const useFileTreeStore = create<FileTreeStore>()((set) => {
+  const doFetch = async (silent: boolean) => {
+    if (!silent) set({ isLoading: true })
     try {
       const data = await window.api.project.getFileTree()
       if (data) {
@@ -64,22 +62,11 @@ export const useFileTreeStore = create<FileTreeStore>()((set) => ({
     } finally {
       set({ isLoading: false })
     }
-  },
-
-  invalidateTree: async () => {
-    set({ isLoading: true })
-    try {
-      const data = await window.api.project.getFileTree()
-      if (data) {
-        const { total, orphans } = countFiles(data.root.nestedItems)
-        set({ root: data.root, locales: data.locales, totalFiles: total, orphanFiles: orphans })
-      } else {
-        set({ root: null, locales: [], totalFiles: 0, orphanFiles: 0 })
-      }
-    } catch (e) {
-      console.error('Failed to invalidate file tree:', e)
-    } finally {
-      set({ isLoading: false })
-    }
   }
-}))
+
+  return {
+    ...initialState,
+    fetchTree: () => doFetch(false),
+    invalidateTree: () => doFetch(true)
+  }
+})

@@ -56,9 +56,6 @@ let invalidateTimer: ReturnType<typeof setTimeout> | null = null
  * Вызывается один раз на уровне приложения (например, в провайдере).
  */
 export function initializeAnalyticsInvalidation(): () => void {
-  const ipc = window.electron?.ipcRenderer
-  if (!ipc) return () => {}
-
   const handler = (): void => {
     if (invalidateTimer) clearTimeout(invalidateTimer)
     invalidateTimer = setTimeout(() => {
@@ -70,9 +67,9 @@ export function initializeAnalyticsInvalidation(): () => void {
     }, 500)
   }
 
-  ipc.on('file-tree:changed', handler)
+  const unsubscribe = window.api.events.onFileTreeChanged(handler)
   return () => {
-    ipc.removeListener('file-tree:changed', handler)
+    unsubscribe()
     if (invalidateTimer) clearTimeout(invalidateTimer)
   }
 }

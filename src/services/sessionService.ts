@@ -1,6 +1,6 @@
 import store from '../domain/store'
 import { Session } from '../domain/models/session'
-import { ProjectService } from './projectService'
+import { clearProjectServiceCache, ProjectService } from './projectService'
 import { SessionServiceErrors } from '../domain/models/errors'
 
 type NewSessionDto = Omit<Session, 'id'>
@@ -100,6 +100,7 @@ class SessionService {
     const session = sessions.find((sess) => sess.id === id) || null
 
     if (session) {
+      clearProjectServiceCache()
       store.set('currentSession', session)
     }
 
@@ -110,6 +111,7 @@ class SessionService {
    * Удаляет текущую сессию (очищает выбор)
    */
   removeCurrentSession(): void {
+    clearProjectServiceCache()
     store.set('currentSession', null)
   }
 

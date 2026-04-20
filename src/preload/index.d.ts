@@ -1,9 +1,11 @@
-import { ElectronAPI } from '@electron-toolkit/preload'
 import { ControllerHandler } from '../controllers/types'
+
+interface Events {
+  onFileTreeChanged: (cb: () => void) => () => void
+}
 
 declare global {
   interface Window {
-    electron: ElectronAPI
-    api: ControllerHandler
+    api: ControllerHandler & { events: Events }
   }
 }

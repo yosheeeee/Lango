@@ -1,197 +1,180 @@
-import { ipcMain } from 'electron'
+import { ipcMain, IpcMainInvokeEvent } from 'electron'
 import { sessionService } from '../services/sessionService'
-import { ProjectService } from '../services/projectService'
+import { getProjectService, ProjectService } from '../services/projectService'
 import { startFileWatcher, stopFileWatcher } from '../services/fileWatcher'
 import { GenericControllerHandler } from './types'
+import { CH } from './channels'
+
+function withProject<Args extends unknown[], R>(
+  fn: (svc: ProjectService, ...args: Args) => R | Promise<R>,
+  fallback?: R
+) {
+  return async (_: IpcMainInvokeEvent, ...args: Args): Promise<R> => {
+    const session = sessionService.getCurrentSession()
+    if (!session) {
+      if (fallback !== undefined) return fallback
+      throw new Error('No active session')
+    }
+    return fn(getProjectService(session.path), ...args)
+  }
+}
 
 // Получить дерево файлов текущего проекта
-ipcMain.handle('project:getFileTree', () => {
-  const session = sessionService.getCurrentSession()
-  if (!session) return null
-  const projectService = new ProjectService(session.path)
-  const treeData = projectService.getFileTree(session.name)
-  // Запускаем watcher при запросе дерева
-  startFileWatcher()
-  return treeData
-})
+ipcMain.handle(
+  CH.project.getFileTree,
+  withProject((svc, name: string) => {
+    startFileWatcher()
+    return svc.getFileTreeAsync(name)
+  }, null)
+)
 
 // Остановить watcher (вызывается при смене сессии или закрытии)
-ipcMain.handle('project:stopWatcher', () => {
+ipcMain.handle(CH.project.stopWatcher, () => {
   stopFileWatcher()
   return true
 })
 
-// Получить список локализаций текущего проекта
-ipcMain.handle('project:getLocaleFolders', () => {
-  const session = sessionService.getCurrentSession()
-  if (!session) return []
-  const projectService = new ProjectService(session.path)
-  return projectService.getLocaleFolders()
-})
-
-// Создать неймспейс (пустой .json файл) во всех локализациях
-ipcMain.handle('project:createNamespace', (_, namespacePath: string) => {
-  const session = sessionService.getCurrentSession()
-  if (!session) throw new Error('No active session')
-  const projectService = new ProjectService(session.path)
-  projectService.createNamespace(namespacePath)
-  return true
-})
-
-// Добавить неймспейс в отсутствующие локали с копированием ключей
-ipcMain.handle('project:fixOrphanNamespace', (_, namespacePath: string) => {
-  const session = sessionService.getCurrentSession()
-  if (!session) throw new Error('No active session')
-  const projectService = new ProjectService(session.path)
-  projectService.fixOrphanNamespace(namespacePath)
-  return true
-})
-
-// Удалить неймспейс из всех локализаций
-ipcMain.handle('project:deleteNamespace', (_, namespacePath: string) => {
-  const session = sessionService.getCurrentSession()
-  if (!session) throw new Error('No active session')
-  const projectService = new ProjectService(session.path)
-  projectService.deleteNamespace(namespacePath)
-  return true
-})
-
-// Удалить папку из всех локализаций
-ipcMain.handle('project:deleteFolder', (_, folderPath: string) => {
-  const session = sessionService.getCurrentSession()
-  if (!session) throw new Error('No active session')
-  const projectService = new ProjectService(session.path)
-  projectService.deleteFolder(folderPath)
-  return true
-})
-
-// Создать папку во всех локализациях
-ipcMain.handle('project:createFolder', (_, folderPath: string) => {
-  const session = sessionService.getCurrentSession()
-  if (!session) throw new Error('No active session')
-  const projectService = new ProjectService(session.path)
-  projectService.createFolder(folderPath)
-  return true
-})
-
-// Создать новую локаль с копированием структуры неймспейсов
-ipcMain.handle('project:createLocale', (_, localeName: string) => {
-  const session = sessionService.getCurrentSession()
-  if (!session) throw new Error('No active session')
-  const projectService = new ProjectService(session.path)
-  projectService.createLocale(localeName)
-  return true
-})
-
-// Удалить локаль
-ipcMain.handle('project:deleteLocale', (_, localeName: string) => {
-  const session = sessionService.getCurrentSession()
-  if (!session) throw new Error('No active session')
-  const projectService = new ProjectService(session.path)
-  projectService.deleteLocale(localeName)
-  return true
-})
-
-// Удалить ключ локализации из всех файлов неймспейсов
-ipcMain.handle('project:deleteLocalizationKey', (_, namespace: string, key: string) => {
-  const session = sessionService.getCurrentSession()
-  if (!session) throw new Error('No active session')
-  const projectService = new ProjectService(session.path)
-  projectService.deleteLocalizationKey(namespace, key)
-  return true
-})
-
-// Переименовать ключ локализации во всех файлах неймспейсов
 ipcMain.handle(
-  'project:renameLocalizationKey',
-  (_, namespace: string, oldKey: string, newKey: string) => {
-    const session = sessionService.getCurrentSession()
-    if (!session) throw new Error('No active session')
-    const projectService = new ProjectService(session.path)
-    projectService.renameLocalizationKey(namespace, oldKey, newKey)
-    return true
-  }
+  CH.project.getLocaleFolders,
+  withProject((svc) => svc.getLocaleFoldersAsync(), [])
 )
 
-// Получить переводы одного ключа по всем локалям
-ipcMain.handle('project:getKeyTranslations', (_, namespace: string, key: string) => {
-  const session = sessionService.getCurrentSession()
-  if (!session) return {}
-  const projectService = new ProjectService(session.path)
-  return projectService.getKeyTranslations(namespace, key)
-})
-
-// Обновить значение перевода для конкретной локали
 ipcMain.handle(
-  'project:updateLocalizationValue',
-  (_, namespace: string, key: string, locale: string, value: string) => {
-    const session = sessionService.getCurrentSession()
-    if (!session) throw new Error('No active session')
-    const projectService = new ProjectService(session.path)
-    projectService.updateLocalizationValue(namespace, key, locale, value)
+  CH.project.createNamespace,
+  withProject((svc, ns: string) => {
+    svc.createNamespace(ns)
     return true
-  }
+  })
 )
 
-// Получить содержимое неймспейса (ключи + значения) для конкретной локали
-ipcMain.handle('project:getNamespaceContent', (_, namespace: string, locale: string) => {
-  const session = sessionService.getCurrentSession()
-  if (!session) return {}
-  const projectService = new ProjectService(session.path)
-  return projectService.getNamespaceContent(namespace, locale)
-})
-
-// Получить содержимое всех неймспейсов для конкретной локали
-ipcMain.handle('project:getAllNamespacesContent', (_, locale: string) => {
-  const session = sessionService.getCurrentSession()
-  if (!session) return {}
-  const projectService = new ProjectService(session.path)
-  return projectService.getAllNamespacesContent(locale)
-})
-
-// Получить список ключей-сирот (отсутствующих в ≥1 локали) для неймспейса
-ipcMain.handle('project:getNamespaceOrphanKeys', (_, namespace: string) => {
-  const session = sessionService.getCurrentSession()
-  if (!session) return []
-  const projectService = new ProjectService(session.path)
-  return projectService.getNamespaceOrphanKeys(namespace)
-})
-
-// Исправить ключ-сироту (добавить в недостающие локали)
-ipcMain.handle('project:fixOrphanKey', (_, namespace: string, key: string) => {
-  const session = sessionService.getCurrentSession()
-  if (!session) throw new Error('No active session')
-  const projectService = new ProjectService(session.path)
-  projectService.fixOrphanKey(namespace, key)
-  return true
-})
-
-// Добавить новый ключ локализации во все файлы неймспейсов
 ipcMain.handle(
-  'project:addLocalizationKey',
-  (_, namespace: string, key: string, parentKey?: string, isParent?: boolean) => {
-    const session = sessionService.getCurrentSession()
-    if (!session) throw new Error('No active session')
-    const projectService = new ProjectService(session.path)
-    projectService.addLocalizationKey(namespace, key, parentKey, isParent)
+  CH.project.fixOrphanNamespace,
+  withProject((svc, ns: string) => {
+    svc.fixOrphanNamespace(ns)
     return true
-  }
+  })
 )
 
-ipcMain.handle('project:search', async (_, query: string, limit = 50, offset = 0) => {
+ipcMain.handle(
+  CH.project.deleteNamespace,
+  withProject((svc, ns: string) => {
+    svc.deleteNamespace(ns)
+    return true
+  })
+)
+
+ipcMain.handle(
+  CH.project.deleteFolder,
+  withProject((svc, fp: string) => {
+    svc.deleteFolder(fp)
+    return true
+  })
+)
+
+ipcMain.handle(
+  CH.project.createFolder,
+  withProject((svc, fp: string) => {
+    svc.createFolder(fp)
+    return true
+  })
+)
+
+ipcMain.handle(
+  CH.project.createLocale,
+  withProject((svc, loc: string) => {
+    svc.createLocale(loc)
+    return true
+  })
+)
+
+ipcMain.handle(
+  CH.project.deleteLocale,
+  withProject((svc, loc: string) => {
+    svc.deleteLocale(loc)
+    return true
+  })
+)
+
+ipcMain.handle(
+  CH.project.deleteLocalizationKey,
+  withProject((svc, ns: string, key: string) => {
+    svc.deleteLocalizationKey(ns, key)
+    return true
+  })
+)
+
+ipcMain.handle(
+  CH.project.renameLocalizationKey,
+  withProject((svc, ns: string, oldKey: string, newKey: string) => {
+    svc.renameLocalizationKey(ns, oldKey, newKey)
+    return true
+  })
+)
+
+ipcMain.handle(
+  CH.project.getKeyTranslations,
+  withProject((svc, ns: string, key: string) => svc.getKeyTranslations(ns, key), {})
+)
+
+ipcMain.handle(
+  CH.project.updateLocalizationValue,
+  withProject((svc, ns: string, key: string, loc: string, val: string) => {
+    svc.updateLocalizationValue(ns, key, loc, val)
+    return true
+  })
+)
+
+ipcMain.handle(
+  CH.project.batchUpdateLocalizationValues,
+  withProject(
+    (svc, updates: { namespace: string; key: string; locale: string; value: string }[]) => {
+      svc.batchUpdateLocalizationValues(updates)
+      return true
+    }
+  )
+)
+
+ipcMain.handle(
+  CH.project.getNamespaceContent,
+  withProject((svc, ns: string, loc: string) => svc.getNamespaceContentAsync(ns, loc), {})
+)
+
+ipcMain.handle(
+  CH.project.getAllNamespacesContent,
+  withProject((svc, loc: string) => svc.getAllNamespacesContentAsync(loc), {})
+)
+
+ipcMain.handle(
+  CH.project.getNamespaceOrphanKeys,
+  withProject((svc, ns: string) => svc.getNamespaceOrphanKeys(ns), [])
+)
+
+ipcMain.handle(
+  CH.project.fixOrphanKey,
+  withProject((svc, ns: string, key: string) => {
+    svc.fixOrphanKey(ns, key)
+    return true
+  })
+)
+
+ipcMain.handle(
+  CH.project.addLocalizationKey,
+  withProject((svc, ns: string, key: string, parentKey?: string, isParent?: boolean) => {
+    svc.addLocalizationKey(ns, key, parentKey, isParent)
+    return true
+  })
+)
+
+ipcMain.handle(CH.project.search, async (_, query: string, limit = 50, offset = 0) => {
   const session = sessionService.getCurrentSession()
   if (!session) return { items: [], total: 0, hasMore: false }
-  const projectService = new ProjectService(session.path)
-  return await projectService.search(query, limit, offset)
+  return getProjectService(session.path).search(query, limit, offset)
 })
 
-// Агрегированная аналитика проекта
-ipcMain.handle('project:getAnalytics', (_, sourceLocale?: string | null) => {
-  const session = sessionService.getCurrentSession()
-  if (!session) return null
-  const projectService = new ProjectService(session.path)
-  return projectService.getAnalytics(sourceLocale ?? null)
-})
+ipcMain.handle(
+  CH.project.getAnalytics,
+  withProject((svc, srcLoc?: string | null) => svc.getAnalyticsAsync(srcLoc ?? null), null)
+)
 
 type Service = typeof projectServiceStub
 
@@ -214,6 +197,9 @@ const projectServiceStub = {
     },
   updateLocalizationValue: (namespace: string, key: string, locale: string, value: string) =>
     void (namespace + key + locale + value),
+  batchUpdateLocalizationValues: (
+    updates: { namespace: string; key: string; locale: string; value: string }[]
+  ) => void updates,
   getNamespaceContent: (namespace: string, locale: string) =>
     null as unknown as ReturnType<ProjectService['getNamespaceContent']> & {
       _unused: typeof namespace & typeof locale
@@ -233,7 +219,7 @@ const projectServiceStub = {
   search: (_: string, _limit?: number, _offset?: number) =>
     void (_ + String(_limit) + String(_offset)),
   getAnalytics: (sourceLocale?: string | null) =>
-    null as (ReturnType<ProjectService['getAnalytics']> & { _u: typeof sourceLocale }) | null
+    null as (ReturnType<ProjectService['getAnalyticsAsync']> & { _u: typeof sourceLocale }) | null
 }
 /* eslint-enable @typescript-eslint/no-unused-vars */
 

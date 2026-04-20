@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { tinykeys } from 'tinykeys'
 import { FileTreeGroup } from '@renderer/components/project/FileTree'
-import { useEditorStore } from '@renderer/stores/visibilityStore'
+import { treePanelRef } from '@renderer/stores/visibilityStore'
 import { useSessionStore } from '@renderer/stores/sessionStore'
 import { useFileTreeStore } from '@renderer/stores/fileTreeStore'
 
@@ -12,7 +12,7 @@ function getVisibleItems(container: HTMLElement): HTMLElement[] {
 }
 
 export default function ProjectTree() {
-  const { projectTreeRef: ref } = useEditorStore()
+  const ref = treePanelRef
   const { currentSession } = useSessionStore()
   const { root, isLoading, fetchTree, invalidateTree } = useFileTreeStore()
 
@@ -24,10 +24,8 @@ export default function ProjectTree() {
     const handler = () => {
       invalidateTree()
     }
-    window.electron.ipcRenderer?.on('file-tree:changed', handler)
-    return () => {
-      window.electron.ipcRenderer?.removeListener('file-tree:changed', handler)
-    }
+    const unsubscribe = window.api.events.onFileTreeChanged(handler)
+    return unsubscribe
   }, [currentSession?.id])
 
   useEffect(() => {

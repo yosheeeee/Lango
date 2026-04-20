@@ -10,16 +10,7 @@ import {
   PopoverContent,
   PopoverTrigger
 } from '@renderer/components/ui/popover'
-import LocaleIcon from '@renderer/components/project/LocaleIcon'
 import { DropdownMenuContent, DropdownMenuItem } from '@renderer/components/ui/dropdown'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@renderer/components/ui/dialog'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/ui/tooltip'
 import { Button } from '@renderer/components/ui/button'
 import { cn } from '@renderer/utils/cn'
@@ -35,10 +26,15 @@ import {
   Wrench,
   X
 } from 'lucide-react'
-import { ComponentProps, FC, useContext, useEffect, useRef, useState } from 'react'
+import { ComponentProps, useContext, useEffect, useRef, useState } from 'react'
 import { DropdownMenu as DropdownMenuPrimitive } from 'radix-ui'
 import { NamespaceCtx } from '../namespaceContext'
 import { useLocalizationStore } from '@renderer/stores/localizationStore'
+import { DeleteConfirmDialog } from './DeleteConfirmDialog'
+import { EditRowButton } from './EditRowButton'
+import { LocaleTranslationsContent } from './LocaleTranslationsContent'
+import { ParentKeyRenameInput } from './ParentKeyRenameInput'
+import { KeyEditor } from './KeyEditor'
 
 type EntryEditorProps = ValueEditorProps & ComponentProps<'div'>
 export default function EntryEditor({
@@ -242,46 +238,6 @@ function ValueEditor({ currentLocalizationValue, translationKey, isOrphan }: Val
   )
 }
 
-type KeyEditorProps = Pick<ValueEditorProps, 'namespace' | 'translationKey'> & {
-  onFinish: () => void
-}
-
-function KeyEditor({ translationKey, onFinish }: KeyEditorProps) {
-  const ctx = useContext(NamespaceCtx)
-  const [value, setValue] = useState(() => translationKey.split('.').at(-1) ?? '')
-
-  async function confirm() {
-    const newName = value.trim()
-    if (!newName || !ctx) return onFinish()
-    await window.api.project.renameLocalizationKey(ctx.namespace, translationKey, newName)
-    ctx.onRefresh()
-    onFinish()
-  }
-
-  return (
-    <div className="flex gap-2.5 w-full">
-      <Input
-        autoFocus
-        className="flex-1"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') confirm()
-          if (e.key === 'Escape') onFinish()
-        }}
-      />
-      <div className="flex gap-1 shrink-0">
-        <EditRowButton onClick={confirm}>
-          <Check />
-        </EditRowButton>
-        <EditRowButton onClick={onFinish}>
-          <X />
-        </EditRowButton>
-      </div>
-    </div>
-  )
-}
-
 type KeyType = 'translation' | 'parent'
 
 type AddKeyButtonProps = {
@@ -469,187 +425,3 @@ export function CollabsibleTranslationsEntry({
     </>
   )
 }
-
-type ParentKeyRenameInputProps = {
-  translationKey: string
-  onFinish: () => void
-}
-
-function ParentKeyRenameInput({ translationKey, onFinish }: ParentKeyRenameInputProps) {
-  const ctx = useContext(NamespaceCtx)
-  const [value, setValue] = useState(() => translationKey.split('.').at(-1) ?? '')
-
-  async function confirm() {
-    const newName = value.trim()
-    if (!newName || !ctx) return onFinish()
-    await window.api.project.renameLocalizationKey(ctx.namespace, translationKey, newName)
-    ctx.onRefresh()
-    onFinish()
-  }
-
-  return (
-    <div className="flex gap-2.5 flex-1 min-w-0">
-      <Input
-        autoFocus
-        className="flex-1"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') confirm()
-          if (e.key === 'Escape') onFinish()
-        }}
-      />
-      <div className="flex gap-1 shrink-0">
-        <EditRowButton onClick={confirm}>
-          <Check />
-        </EditRowButton>
-        <EditRowButton onClick={onFinish}>
-          <X />
-        </EditRowButton>
-      </div>
-    </div>
-  )
-}
-
-function LocaleTranslationsContent({
-  namespace,
-  translationKey
-}: {
-  namespace: string
-  translationKey: string
-}) {
-  const { currentLocale } = useLocalizationStore()
-  const [translations, setTranslations] = useState<Record<string, string> | null>(null)
-
-  useEffect(() => {
-    window.api.project.getKeyTranslations(namespace, translationKey).then(setTranslations)
-  }, [namespace, translationKey])
-
-  async function handleSave(locale: string, newValue: string) {
-    await window.api.project.updateLocalizationValue(namespace, translationKey, locale, newValue)
-    setTranslations((prev) => (prev ? { ...prev, [locale]: newValue } : prev))
-  }
-
-  if (!translations) {
-    return <p className="p-3 text-xs text-gray-400">Loading…</p>
-  }
-
-  const otherLocales = Object.entries(translations).filter(([locale]) => locale !== currentLocale)
-
-  if (otherLocales.length === 0) {
-    return <p className="p-3 text-xs text-gray-400">No other locales.</p>
-  }
-
-  return (
-    <div className="flex flex-col divide-y divide-gray-700">
-      {otherLocales.map(([locale, val]) => (
-        <LocaleRow key={locale} locale={locale} value={val} onSave={(v) => handleSave(locale, v)} />
-      ))}
-    </div>
-  )
-}
-
-function LocaleRow({
-  locale,
-  value,
-  onSave
-}: {
-  locale: string
-  value: string
-  onSave: (value: string) => void
-}) {
-  const [localValue, setLocalValue] = useState(value)
-  const isDirty = localValue !== value
-
-  useEffect(() => {
-    setLocalValue(value)
-  }, [value])
-
-  function handleCancel() {
-    setLocalValue(value)
-  }
-
-  return (
-    <div className="flex items-center p-2">
-      <div className="flex flex-1 focus-within:ring-[3px] focus-within:ring-gray-700/50 rounded-md">
-        <div className="flex items-center gap-1.5 px-2 h-9 bg-gray-800 border border-gray-600  rounded-l-md shrink-0 text-gray-400 max-w-12.5 overflow-hidden">
-          <LocaleIcon locale={locale} className="size-4 shrink-0" />
-          <span className="text-sm leading-none truncate shrink-0">{locale}</span>
-        </div>
-        <Input
-          value={localValue}
-          onChange={(e) => setLocalValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') onSave(localValue)
-            if (e.key === 'Escape') handleCancel()
-          }}
-          className={cn(
-            'flex-1 rounded-none border-l-0 focus-visible:ring-0',
-            !isDirty && 'rounded-r-md'
-          )}
-        />
-        {isDirty && (
-          <>
-            <button
-              onClick={() => onSave(localValue)}
-              className="shrink-0 size-9 flex items-center justify-center [&>svg]:size-5 cursor-pointer text-gray-400 bg-gray-800 hover:bg-green-900 hover:text-green-300 transition-colors border border-l-0 border-gray-600"
-            >
-              <Check />
-            </button>
-            <button
-              onClick={handleCancel}
-              className="shrink-0 size-9 flex items-center justify-center [&>svg]:size-5 cursor-pointer text-gray-400 bg-gray-800 hover:bg-gray-700 transition-colors border border-l-0 border-gray-600 rounded-r-md"
-            >
-              <X />
-            </button>
-          </>
-        )}
-      </div>
-    </div>
-  )
-}
-
-type DeleteConfirmDialogProps = {
-  open: boolean
-  translationKey: string
-  onConfirm: () => void
-  onCancel: () => void
-}
-
-function DeleteConfirmDialog({
-  open,
-  translationKey,
-  onConfirm,
-  onCancel
-}: DeleteConfirmDialogProps) {
-  return (
-    <Dialog open={open} onOpenChange={(o) => !o && onCancel()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Delete key</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete{' '}
-            <span className="text-white font-mono">{translationKey}</span>? This will remove the key
-            from all locales and cannot be undone.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button onClick={onCancel}>Cancel</Button>
-          <Button onClick={onConfirm} className="bg-red-700 hover:bg-red-600 text-white">
-            Delete
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-const EditRowButton: FC<ComponentProps<'button'>> = ({ className, ...props }) => (
-  <button
-    {...props}
-    className={cn(
-      'size-9 flex items-center justify-center [&>svg]:size-5 cursor-pointer',
-      className
-    )}
-  />
-)

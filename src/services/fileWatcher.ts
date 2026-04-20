@@ -7,7 +7,8 @@ const IGNORED_PATTERNS = ['.DS_Store', 'Thumbs.db', 'desktop.ini', '.git', '.ide
 let watcher: fs.FSWatcher | null = null
 
 function shouldIgnore(fileName: string): boolean {
-  return IGNORED_PATTERNS.some((pattern) => fileName.toLowerCase().includes(pattern.toLowerCase()))
+  const lower = fileName.toLowerCase()
+  return IGNORED_PATTERNS.some((pattern) => lower.startsWith(pattern.toLowerCase()))
 }
 
 function notifyRenderer(): void {

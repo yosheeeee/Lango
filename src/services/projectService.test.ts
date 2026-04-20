@@ -31,7 +31,7 @@ describe('ProjectService', () => {
   })
 
   describe('checkProjectStructure', () => {
-    it('должен вернуть FOLDER_NOT_FOUND, если папка не существует', () => {
+    it('должен вернуть FOLDER_NOT_FOUND, если папка не существует', async () => {
       const nonExistentPath = path.join(testDir, 'non-existent')
       const service = new ProjectService(nonExistentPath)
 
@@ -40,13 +40,13 @@ describe('ProjectService', () => {
       expect(result).toBe(CheckProjectStructureErrors.FOLDER_NOT_FOUND)
     })
 
-    it('должен вернуть null, если папка пустая', () => {
+    it('должен вернуть null, если папка пустая', async () => {
       const result = projectService.checkProjectStructure()
 
       expect(result).toBe(null)
     })
 
-    it('должен вернуть null, если папка содержит только системные файлы', () => {
+    it('должен вернуть null, если папка содержит только системные файлы', async () => {
       // Создаем .git папку
       fs.mkdirSync(path.join(testDir, '.git'), { recursive: true })
       fs.writeFileSync(path.join(testDir, '.git', 'config'), '[core]')
@@ -56,7 +56,7 @@ describe('ProjectService', () => {
       expect(result).toBe(null)
     })
 
-    it('должен вернуть FOUND_INVALID_FILES, если в корне есть файлы', () => {
+    it('должен вернуть FOUND_INVALID_FILES, если в корне есть файлы', async () => {
       fs.writeFileSync(path.join(testDir, 'readme.txt'), 'content')
 
       const result = projectService.checkProjectStructure()
@@ -64,7 +64,7 @@ describe('ProjectService', () => {
       expect(result).toBe(CheckProjectStructureErrors.FOUND_INVALID_FILES)
     })
 
-    it('должен вернуть null для валидной структуры проекта', () => {
+    it('должен вернуть null для валидной структуры проекта', async () => {
       // Создаем папки языков
       const enDir = path.join(testDir, 'en')
       const ruDir = path.join(testDir, 'ru')
@@ -80,7 +80,7 @@ describe('ProjectService', () => {
       expect(result).toBe(null)
     })
 
-    it('должен поддерживать вложенные папки с JSON файлами', () => {
+    it('должен поддерживать вложенные папки с JSON файлами', async () => {
       const enDir = path.join(testDir, 'en')
       const featuresDir = path.join(enDir, 'features')
       fs.mkdirSync(featuresDir, { recursive: true })
@@ -93,7 +93,7 @@ describe('ProjectService', () => {
       expect(result).toBe(null)
     })
 
-    it('должен игнорировать регистр расширения файла', () => {
+    it('должен игнорировать регистр расширения файла', async () => {
       const enDir = path.join(testDir, 'en')
       fs.mkdirSync(enDir, { recursive: true })
       fs.writeFileSync(path.join(enDir, 'common.JSON'), '{}')
@@ -105,7 +105,7 @@ describe('ProjectService', () => {
   })
 
   describe('constructor', () => {
-    it('должен правильно инициализировать projectPath', () => {
+    it('должен правильно инициализировать projectPath', async () => {
       const customPath = '/custom/path/to/project'
       const service = new ProjectService(customPath)
 
@@ -114,7 +114,7 @@ describe('ProjectService', () => {
   })
 
   describe('getLocaleFolders', () => {
-    it('должен вернуть список папок локализаций', () => {
+    it('должен вернуть список папок локализаций', async () => {
       fs.mkdirSync(path.join(testDir, 'en'), { recursive: true })
       fs.mkdirSync(path.join(testDir, 'ru'), { recursive: true })
       fs.mkdirSync(path.join(testDir, '.git'), { recursive: true })
@@ -126,7 +126,7 @@ describe('ProjectService', () => {
   })
 
   describe('createLocale', () => {
-    it('должен создать новую локаль с копированием структуры ключей', () => {
+    it('должен создать новую локаль с копированием структуры ключей', async () => {
       const enDir = path.join(testDir, 'en')
       const ruDir = path.join(testDir, 'ru')
       fs.mkdirSync(enDir, { recursive: true })
@@ -146,7 +146,7 @@ describe('ProjectService', () => {
       expect(frCommon).toEqual({ greeting: '', farewell: '' })
     })
 
-    it('должен создать вложенную структуру папок', () => {
+    it('должен создать вложенную структуру папок', async () => {
       const enDir = path.join(testDir, 'en')
       const authEnDir = path.join(enDir, 'auth')
       fs.mkdirSync(authEnDir, { recursive: true })
@@ -177,7 +177,7 @@ describe('ProjectService', () => {
       expect(deLogin).toEqual({ title: '' })
     })
 
-    it('должен пропустить файлы-сироты', () => {
+    it('должен пропустить файлы-сироты', async () => {
       const enDir = path.join(testDir, 'en')
       const ruDir = path.join(testDir, 'ru')
       fs.mkdirSync(enDir, { recursive: true })
@@ -199,20 +199,20 @@ describe('ProjectService', () => {
       expect(fs.existsSync(path.join(testDir, 'fr', 'orphan.json'))).toBe(false)
     })
 
-    it('должен выбросить ошибку если локаль уже существует', () => {
+    it('должен выбросить ошибку если локаль уже существует', async () => {
       fs.mkdirSync(path.join(testDir, 'en'), { recursive: true })
       fs.writeFileSync(path.join(testDir, 'en', 'common.json'), '{}')
 
       expect(() => projectService.createLocale('en')).toThrow('Locale "en" already exists')
     })
 
-    it('должен выбросить ошибку если нет локалей для копирования', () => {
+    it('должен выбросить ошибку если нет локалей для копирования', async () => {
       expect(() => projectService.createLocale('fr')).toThrow(
         'No existing locales to copy structure from'
       )
     })
 
-    it('должен очистить значения с вложенной структурой', () => {
+    it('должен очистить значения с вложенной структурой', async () => {
       const enDir = path.join(testDir, 'en')
       const ruDir = path.join(testDir, 'ru')
       fs.mkdirSync(enDir, { recursive: true })
@@ -234,7 +234,7 @@ describe('ProjectService', () => {
   })
 
   describe('deleteLocale', () => {
-    it('должен удалить папку локали', () => {
+    it('должен удалить папку локали', async () => {
       const enDir = path.join(testDir, 'en')
       const ruDir = path.join(testDir, 'ru')
       fs.mkdirSync(enDir, { recursive: true })
@@ -248,13 +248,13 @@ describe('ProjectService', () => {
       expect(fs.existsSync(enDir)).toBe(true)
     })
 
-    it('не должен падать если папки не существует', () => {
+    it('не должен падать если папки не существует', async () => {
       expect(() => projectService.deleteLocale('nonexistent')).not.toThrow()
     })
   })
 
   describe('fixOrphanNamespace', () => {
-    it('должен скопировать файл в отсутствующую локаль с пустыми значениями', () => {
+    it('должен скопировать файл в отсутствующую локаль с пустыми значениями', async () => {
       const enDir = path.join(testDir, 'en')
       const ruDir = path.join(testDir, 'ru')
       fs.mkdirSync(enDir, { recursive: true })
@@ -271,7 +271,7 @@ describe('ProjectService', () => {
       expect(ruCommon).toEqual({ key1: '', key2: '' })
     })
 
-    it('должен создать вложенную структуру папок при фиксе', () => {
+    it('должен создать вложенную структуру папок при фиксе', async () => {
       const enDir = path.join(testDir, 'en')
       const authEnDir = path.join(enDir, 'auth')
       fs.mkdirSync(authEnDir, { recursive: true })
@@ -290,7 +290,7 @@ describe('ProjectService', () => {
       expect(ruLogin).toEqual({ title: '' })
     })
 
-    it('должен выбросить ошибку если файл нигде не существует', () => {
+    it('должен выбросить ошибку если файл нигде не существует', async () => {
       fs.mkdirSync(path.join(testDir, 'en'), { recursive: true })
 
       expect(() => projectService.fixOrphanNamespace('nonexistent')).toThrow(
@@ -300,7 +300,7 @@ describe('ProjectService', () => {
   })
 
   describe('createNamespace', () => {
-    it('должен создать пустой неймспейс во всех локалях', () => {
+    it('должен создать пустой неймспейс во всех локалях', async () => {
       const enDir = path.join(testDir, 'en')
       const ruDir = path.join(testDir, 'ru')
       fs.mkdirSync(enDir, { recursive: true })
@@ -314,7 +314,7 @@ describe('ProjectService', () => {
   })
 
   describe('deleteNamespace', () => {
-    it('должен удалить неймспейс из всех локалей', () => {
+    it('должен удалить неймспейс из всех локалей', async () => {
       const enDir = path.join(testDir, 'en')
       const ruDir = path.join(testDir, 'ru')
       fs.mkdirSync(enDir, { recursive: true })
@@ -330,7 +330,7 @@ describe('ProjectService', () => {
   })
 
   describe('createFolder', () => {
-    it('должен создать папку во всех локалях', () => {
+    it('должен создать папку во всех локалях', async () => {
       const enDir = path.join(testDir, 'en')
       const ruDir = path.join(testDir, 'ru')
       fs.mkdirSync(enDir, { recursive: true })
@@ -344,7 +344,7 @@ describe('ProjectService', () => {
   })
 
   describe('deleteFolder', () => {
-    it('должен удалить папку из всех локалей', () => {
+    it('должен удалить папку из всех локалей', async () => {
       const enDir = path.join(testDir, 'en')
       const ruDir = path.join(testDir, 'ru')
       fs.mkdirSync(path.join(enDir, 'auth'), { recursive: true })
@@ -358,14 +358,14 @@ describe('ProjectService', () => {
   })
 
   describe('getAnalytics', () => {
-    it('возвращает пустой результат для пустого проекта', () => {
-      const result = projectService.getAnalytics()
+    it('возвращает пустой результат для пустого проекта', async () => {
+      const result = await projectService.getAnalyticsAsync()
       expect(result.totals.locales).toBe(0)
       expect(result.perLocale).toEqual([])
       expect(result.orphanFiles).toEqual([])
     })
 
-    it('считает уникальные ключи, покрытие и пустые значения', () => {
+    it('считает уникальные ключи, покрытие и пустые значения', async () => {
       const enDir = path.join(testDir, 'en')
       const ruDir = path.join(testDir, 'ru')
       fs.mkdirSync(enDir, { recursive: true })
@@ -380,7 +380,7 @@ describe('ProjectService', () => {
         JSON.stringify({ hello: 'Привет', bye: '' })
       )
 
-      const result = projectService.getAnalytics()
+      const result = await projectService.getAnalyticsAsync()
 
       expect(result.totals.locales).toBe(2)
       expect(result.totals.uniqueKeys).toBe(2)
@@ -395,7 +395,7 @@ describe('ProjectService', () => {
       expect(ru.emptyValues).toBe(1)
     })
 
-    it('находит файлы-сироты и ключи-сироты', () => {
+    it('находит файлы-сироты и ключи-сироты', async () => {
       const enDir = path.join(testDir, 'en')
       const ruDir = path.join(testDir, 'ru')
       fs.mkdirSync(enDir, { recursive: true })
@@ -405,7 +405,7 @@ describe('ProjectService', () => {
       fs.writeFileSync(path.join(ruDir, 'common.json'), JSON.stringify({ a: 'А' }))
       fs.writeFileSync(path.join(enDir, 'only-en.json'), JSON.stringify({ x: 'x' }))
 
-      const result = projectService.getAnalytics()
+      const result = await projectService.getAnalyticsAsync()
 
       expect(result.totals.orphanFiles).toBe(1)
       expect(result.orphanFiles[0].namespace).toBe('only-en')
@@ -417,7 +417,7 @@ describe('ProjectService', () => {
       expect(orphanB!.missingLocales).toEqual(['ru'])
     })
 
-    it('находит дубликаты значений внутри локали', () => {
+    it('находит дубликаты значений внутри локали', async () => {
       const enDir = path.join(testDir, 'en')
       fs.mkdirSync(enDir, { recursive: true })
       fs.writeFileSync(
@@ -425,14 +425,14 @@ describe('ProjectService', () => {
         JSON.stringify({ a: 'Save', b: 'Save', c: 'Cancel' })
       )
 
-      const result = projectService.getAnalytics()
+      const result = await projectService.getAnalyticsAsync()
 
       expect(result.totals.duplicateGroups).toBe(1)
       expect(result.duplicates[0].value).toBe('Save')
       expect(result.duplicates[0].occurrences).toHaveLength(2)
     })
 
-    it('находит непереведённые ключи (совпадающие с sourceLocale)', () => {
+    it('находит непереведённые ключи (совпадающие с sourceLocale)', async () => {
       const enDir = path.join(testDir, 'en')
       const ruDir = path.join(testDir, 'ru')
       fs.mkdirSync(enDir, { recursive: true })
@@ -447,7 +447,7 @@ describe('ProjectService', () => {
         JSON.stringify({ name: 'Имя', email: 'Email', age: 'Age' })
       )
 
-      const result = projectService.getAnalytics('en')
+      const result = await projectService.getAnalyticsAsync('en')
 
       expect(result.sourceLocale).toBe('en')
       expect(result.untranslated).toHaveLength(2)
@@ -456,7 +456,7 @@ describe('ProjectService', () => {
       expect(emailEntry!.locales).toEqual(['ru'])
     })
 
-    it('корректно обрабатывает вложенные ключи', () => {
+    it('корректно обрабатывает вложенные ключи', async () => {
       const enDir = path.join(testDir, 'en')
       const ruDir = path.join(testDir, 'ru')
       fs.mkdirSync(enDir, { recursive: true })
@@ -470,7 +470,7 @@ describe('ProjectService', () => {
         JSON.stringify({ button: { submit: 'Отправить' } })
       )
 
-      const result = projectService.getAnalytics()
+      const result = await projectService.getAnalyticsAsync()
 
       expect(result.totals.uniqueKeys).toBe(2)
       const orphan = result.orphanKeys.find((k) => k.key === 'button.cancel')

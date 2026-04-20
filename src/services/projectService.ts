@@ -1,5 +1,7 @@
 import fs from 'fs'
+import { readdir as fspReaddir, readFile as fspReadFile } from 'fs/promises'
 import path from 'path'
+import { safeJsonParse } from '../utils/safeJson'
 import { CheckProjectStructureErrors } from '../domain/models/errors'
 import { FileTreeData, FileTreeGroup, FileTreeItem } from '../domain/models/fileTree'
 import { SearchMatch, SearchResult } from '../domain/models/search'
@@ -12,6 +14,21 @@ import {
   ProjectAnalytics,
   UntranslatedEntry
 } from '../domain/models/analytics'
+
+const cache = new Map<string, ProjectService>()
+
+export function getProjectService(projectPath: string): ProjectService {
+  let s = cache.get(projectPath)
+  if (!s) {
+    s = new ProjectService(projectPath)
+    cache.set(projectPath, s)
+  }
+  return s
+}
+
+export function clearProjectServiceCache(): void {
+  cache.clear()
+}
 
 export class ProjectService {
   private projectPath: string
@@ -58,6 +75,86 @@ export class ProjectService {
     } catch {
       return { root: { name: projectName, nestedItems: [] }, locales: [] }
     }
+  }
+
+  /**
+   * Async-версия getFileTree — не блокирует event loop при больших проектах.
+   * Параллельно сканирует все локали.
+   */
+  async getFileTreeAsync(projectName: string): Promise<FileTreeData> {
+    try {
+      const locales = await this.getLocaleFoldersAsync()
+      if (locales.length === 0) return { root: { name: projectName, nestedItems: [] }, locales: [] }
+
+      const allFilePaths = new Map<string, Set<string>>()
+      const allDirPaths = new Map<string, Set<string>>()
+
+      // Параллельно обходим все локали
+      const results = await Promise.all(
+        locales.map(async (locale) => {
+          const localePath = path.join(this.projectPath, locale)
+          const [files, dirs] = await Promise.all([
+            this.collectJsonFilesAsync(localePath, ''),
+            this.collectDirectoriesAsync(localePath, '')
+          ])
+          return { locale, files, dirs }
+        })
+      )
+
+      for (const { locale, files, dirs } of results) {
+        for (const filePath of files) {
+          if (!allFilePaths.has(filePath)) allFilePaths.set(filePath, new Set())
+          allFilePaths.get(filePath)!.add(locale)
+        }
+        for (const dirPath of dirs) {
+          if (!allDirPaths.has(dirPath)) allDirPaths.set(dirPath, new Set())
+          allDirPaths.get(dirPath)!.add(locale)
+        }
+      }
+
+      const nestedItems = this.buildUnifiedTree(allFilePaths, allDirPaths, locales)
+      return { root: { name: projectName, nestedItems }, locales }
+    } catch {
+      return { root: { name: projectName, nestedItems: [] }, locales: [] }
+    }
+  }
+
+  private async collectDirectoriesAsync(dirPath: string, relativeDir: string): Promise<string[]> {
+    const dirs: string[] = []
+    try {
+      const entries = await fspReaddir(dirPath, { withFileTypes: true })
+      for (const item of entries.filter((e) => !this.isSystemFile(e.name))) {
+        if (item.isDirectory()) {
+          const sub = relativeDir ? `${relativeDir}/${item.name}` : item.name
+          dirs.push(sub)
+          dirs.push(...(await this.collectDirectoriesAsync(path.join(dirPath, item.name), sub)))
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return dirs
+  }
+
+  private async collectJsonFilesAsync(dirPath: string, relativeDir: string): Promise<string[]> {
+    const files: string[] = []
+    try {
+      const entries = await fspReaddir(dirPath, { withFileTypes: true })
+      const meaningfulItems = entries.filter((item) => !this.isSystemFile(item.name))
+      for (const item of meaningfulItems) {
+        if (item.isDirectory()) {
+          const subDirPath = path.join(dirPath, item.name)
+          const subRelativeDir = relativeDir ? `${relativeDir}/${item.name}` : item.name
+          files.push(...(await this.collectJsonFilesAsync(subDirPath, subRelativeDir)))
+        } else if (item.isFile() && item.name.toLowerCase().endsWith('.json')) {
+          const relativePath = relativeDir ? `${relativeDir}/${item.name}` : item.name
+          files.push(relativePath)
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return files
   }
 
   /**
@@ -298,6 +395,22 @@ export class ProjectService {
   }
 
   /**
+   * Async-версия getLocaleFolders — не блокирует event loop.
+   * Используется в batch-операциях и поиске.
+   */
+  async getLocaleFoldersAsync(): Promise<string[]> {
+    try {
+      const entries = await fspReaddir(this.projectPath, { withFileTypes: true })
+      return entries
+        .filter((e) => e.isDirectory() && !this.isSystemFile(e.name))
+        .map((e) => e.name)
+        .sort()
+    } catch {
+      return []
+    }
+  }
+
+  /**
    * Создаёт новую локаль с полным переносом структуры неймспейсов
    * из существующих локалей (за исключением файлов-сирот).
    * Ключи копируются 1-в-1, но со значениями-пустыми строками.
@@ -407,11 +520,65 @@ export class ProjectService {
     }
   }
 
+  /**
+   * Batch update: применяет несколько изменений значений за один вызов.
+   * Группирует по (namespace, locale) чтобы писать каждый файл один раз.
+   */
+  batchUpdateLocalizationValues(
+    updates: { namespace: string; key: string; locale: string; value: string }[]
+  ): void {
+    // Группируем по filePath
+    const byFile = new Map<
+      string,
+      { namespace: string; locale: string; updates: { key: string; value: string }[] }
+    >()
+    for (const u of updates) {
+      const filePath = path.join(this.projectPath, u.locale, `${u.namespace}.json`)
+      if (!byFile.has(filePath)) {
+        byFile.set(filePath, { namespace: u.namespace, locale: u.locale, updates: [] })
+      }
+      byFile.get(filePath)!.updates.push({ key: u.key, value: u.value })
+    }
+
+    for (const [filePath, { updates: fileUpdates }] of byFile) {
+      try {
+        const content = fs.readFileSync(filePath, 'utf-8')
+        const json = JSON.parse(content)
+        for (const { key, value } of fileUpdates) {
+          const keyParts = key.split('.')
+          const parent =
+            keyParts.length > 1 ? this.getNestedValue(json, keyParts.slice(0, -1)) : json
+          if (!parent || typeof parent !== 'object' || Array.isArray(parent)) continue
+          ;(parent as Record<string, unknown>)[keyParts[keyParts.length - 1]] = value
+        }
+        fs.writeFileSync(filePath, JSON.stringify(json, null, 2), 'utf-8')
+      } catch {
+        // ignore
+      }
+    }
+  }
+
   getNamespaceContent(namespace: string, locale: string): Record<string, unknown> {
     const filePath = path.join(this.projectPath, locale, `${namespace}.json`)
     try {
       const content = fs.readFileSync(filePath, 'utf-8')
-      return JSON.parse(content)
+      return safeJsonParse(content)
+    } catch {
+      return {}
+    }
+  }
+
+  /**
+   * Async-версия getNamespaceContent — не блокирует event loop.
+   */
+  async getNamespaceContentAsync(
+    namespace: string,
+    locale: string
+  ): Promise<Record<string, unknown>> {
+    const filePath = path.join(this.projectPath, locale, `${namespace}.json`)
+    try {
+      const content = await fspReadFile(filePath, 'utf-8')
+      return safeJsonParse(content)
     } catch {
       return {}
     }
@@ -605,6 +772,46 @@ export class ProjectService {
     return result
   }
 
+  /**
+   * Async-версия getAllNamespacesContent — не блокирует event loop при больших проектах.
+   */
+  async getAllNamespacesContentAsync(
+    locale: string
+  ): Promise<Record<string, Record<string, unknown>>> {
+    const locales = await this.getLocaleFoldersAsync()
+    if (!locales.includes(locale)) return {}
+
+    const localePath = path.join(this.projectPath, locale)
+    const result: Record<string, Record<string, unknown>> = {}
+
+    const collect = async (dirPath: string, relativeDir: string) => {
+      try {
+        const entries = await fspReaddir(dirPath, { withFileTypes: true })
+        for (const entry of entries) {
+          if (this.isSystemFile(entry.name)) continue
+          if (entry.isDirectory()) {
+            const sub = relativeDir ? `${relativeDir}/${entry.name}` : entry.name
+            await collect(path.join(dirPath, entry.name), sub)
+          } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.json')) {
+            const nameWithoutExt = entry.name.replace(/\.json$/i, '')
+            const namespace = relativeDir ? `${relativeDir}/${nameWithoutExt}` : nameWithoutExt
+            try {
+              const content = await fspReadFile(path.join(dirPath, entry.name), 'utf-8')
+              result[namespace] = JSON.parse(content)
+            } catch {
+              result[namespace] = {}
+            }
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    await collect(localePath, '')
+    return result
+  }
+
   getNamespaceOrphanKeys(namespace: string): string[] {
     const locales = this.getLocaleFolders()
     if (locales.length === 0) return []
@@ -659,12 +866,11 @@ export class ProjectService {
   }
 
   /**
-   * Агрегированная аналитика проекта: один проход по всем локалям/неймспейсам.
-   * @param sourceLocale — если задан, заполняется секция `untranslated` (ключи,
-   *   значения которых в других локалях идентичны sourceLocale).
+   * Async-версия getAnalytics — читает все локали параллельно.
+   * Выделяет тяжелые I/O операции в async, затем использует CPU-bound логику.
    */
-  getAnalytics(sourceLocale?: string | null): ProjectAnalytics {
-    const locales = this.getLocaleFolders()
+  async getAnalyticsAsync(sourceLocale?: string | null): Promise<ProjectAnalytics> {
+    const locales = await this.getLocaleFoldersAsync()
     const emptyResult: ProjectAnalytics = {
       totals: {
         locales: 0,
@@ -687,35 +893,51 @@ export class ProjectService {
     }
     if (locales.length === 0) return emptyResult
 
-    const effectiveSourceLocale =
-      sourceLocale && locales.includes(sourceLocale) ? sourceLocale : null
+    // Параллельно читаем содержимое всех локалей (async I/O)
+    const perLocaleArr = await Promise.all(
+      locales.map(async (locale) => ({
+        locale,
+        content: await this.getAllNamespacesContentAsync(locale)
+      }))
+    )
 
-    // 1) Читаем всё содержимое: locale -> namespace -> json
+    // Делегируем CPU-bound аналитику sync-методу, подменив I/O
     const perLocaleContent: Record<string, Record<string, Record<string, unknown>>> = {}
-    const allNamespaces = new Set<string>()
-    for (const locale of locales) {
-      const content = this.getAllNamespacesContent(locale)
+    for (const { locale, content } of perLocaleArr) {
       perLocaleContent[locale] = content
-      for (const ns of Object.keys(content)) allNamespaces.add(ns)
     }
 
+    return this.computeAnalytics(locales, perLocaleContent, sourceLocale ?? null)
+  }
+
+  /**
+   * CPU-bound часть getAnalytics без I/O.
+   */
+  private computeAnalytics(
+    locales: string[],
+    perLocaleContent: Record<string, Record<string, Record<string, unknown>>>,
+    sourceLocale: string | null
+  ): ProjectAnalytics {
+    const allNamespaces = new Set<string>()
+    for (const l of locales) {
+      for (const ns of Object.keys(perLocaleContent[l])) allNamespaces.add(ns)
+    }
     const namespaces = [...allNamespaces].sort()
+    const effectiveSourceLocale =
+      sourceLocale && locales.includes(sourceLocale) ? sourceLocale : null
 
     const orphanFiles: OrphanFileEntry[] = []
     const orphanKeys: OrphanKeyEntry[] = []
     const emptyValues: EmptyValueEntry[] = []
     const untranslated: UntranslatedEntry[] = []
 
-    // locale -> Set<"namespace.key"> (присутствует)
     const localePresentKeys: Record<string, Set<string>> = {}
-    // locale -> count пустых значений
     const localeEmptyCount: Record<string, number> = {}
     for (const l of locales) {
       localePresentKeys[l] = new Set()
       localeEmptyCount[l] = 0
     }
 
-    // 2) Дубликаты: locale -> Map<value, [{ns, key}]>
     const duplicateMaps: Record<string, Map<string, { namespace: string; key: string }[]>> = {}
     for (const l of locales) duplicateMaps[l] = new Map()
 
@@ -723,20 +945,13 @@ export class ProjectService {
     const uniqueKeySet = new Set<string>()
 
     for (const namespace of namespaces) {
-      // какие локали содержат этот файл
       const presentLocales = locales.filter((l) => namespace in perLocaleContent[l])
       const missingFileLocales = locales.filter((l) => !(namespace in perLocaleContent[l]))
       if (missingFileLocales.length > 0) {
-        orphanFiles.push({
-          namespace,
-          presentLocales,
-          missingLocales: missingFileLocales
-        })
+        orphanFiles.push({ namespace, presentLocales, missingLocales: missingFileLocales })
       }
 
-      // key -> Map<locale, value>
       const keyMap = new Map<string, Map<string, string>>()
-
       for (const locale of presentLocales) {
         const json = perLocaleContent[locale][namespace] ?? {}
         const leafKeys = this.flattenLeafKeys(json, '')
@@ -745,14 +960,11 @@ export class ProjectService {
           const value = typeof rawValue === 'string' ? rawValue : ''
           if (!keyMap.has(key)) keyMap.set(key, new Map())
           keyMap.get(key)!.set(locale, value)
-
           const combined = `${namespace}::${key}`
           uniqueKeySet.add(combined)
           totalKeyInstances += 1
           localePresentKeys[locale].add(combined)
           if (value === '') localeEmptyCount[locale] += 1
-
-          // Для дубликатов — игнорируем пустые строки
           if (value !== '') {
             const bucket = duplicateMaps[locale].get(value)
             if (bucket) bucket.push({ namespace, key })
@@ -761,7 +973,6 @@ export class ProjectService {
         }
       }
 
-      // Проходим по собранным ключам неймспейса
       for (const [key, localeValues] of keyMap) {
         const keyPresentLocales = [...localeValues.keys()].sort()
         const keyMissingLocales = locales.filter((l) => !localeValues.has(l))
@@ -773,15 +984,11 @@ export class ProjectService {
             missingLocales: keyMissingLocales
           })
         }
-
-        // Пустые значения
         const emptyLocales: string[] = []
         for (const [loc, v] of localeValues) if (v === '') emptyLocales.push(loc)
         if (emptyLocales.length > 0) {
           emptyValues.push({ namespace, key, emptyLocales: emptyLocales.sort() })
         }
-
-        // Непереведённые
         if (effectiveSourceLocale && localeValues.has(effectiveSourceLocale)) {
           const srcValue = localeValues.get(effectiveSourceLocale)!
           if (srcValue !== '') {
@@ -803,7 +1010,6 @@ export class ProjectService {
       }
     }
 
-    // 3) Покрытие по локалям
     const uniqueKeysCount = uniqueKeySet.size
     const perLocale: LocaleCoverage[] = locales.map((locale) => {
       const presentKeys = localePresentKeys[locale].size
@@ -820,18 +1026,13 @@ export class ProjectService {
       }
     })
 
-    // 4) Дубликаты: оставляем группы > 1
     const duplicates: DuplicateValueEntry[] = []
     for (const locale of locales) {
       for (const [value, occurrences] of duplicateMaps[locale]) {
-        if (occurrences.length > 1) {
-          duplicates.push({ locale, value, occurrences })
-        }
+        if (occurrences.length > 1) duplicates.push({ locale, value, occurrences })
       }
     }
     duplicates.sort((a, b) => b.occurrences.length - a.occurrences.length)
-
-    // 5) Сортируем стабильно
     orphanFiles.sort((a, b) => a.namespace.localeCompare(b.namespace))
     orphanKeys.sort((a, b) => a.namespace.localeCompare(b.namespace) || a.key.localeCompare(b.key))
     emptyValues.sort((a, b) => a.namespace.localeCompare(b.namespace) || a.key.localeCompare(b.key))
