@@ -28,8 +28,11 @@ export const useLocalizationStore = create<LocalizationStore>()((set) => ({
     set({ isLoading: true })
     try {
       const locales = await window.api.project.getLocaleFolders()
-      console.log('[localizationStore] fetchLocales result:', locales)
-      set({ locales: locales ?? [], currentLocale: locales[0] ?? null, isLoading: false })
+      set((s) => ({
+        locales: locales ?? [],
+        currentLocale: s.currentLocale ?? locales[0] ?? null,
+        isLoading: false
+      }))
     } catch (e) {
       console.error('Failed to fetch locales:', e)
       set({ locales: [], isLoading: false })
