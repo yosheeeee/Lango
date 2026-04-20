@@ -356,4 +356,126 @@ describe('ProjectService', () => {
       expect(fs.existsSync(path.join(ruDir, 'auth'))).toBe(false)
     })
   })
+
+  describe('getAnalytics', () => {
+    it('возвращает пустой результат для пустого проекта', () => {
+      const result = projectService.getAnalytics()
+      expect(result.totals.locales).toBe(0)
+      expect(result.perLocale).toEqual([])
+      expect(result.orphanFiles).toEqual([])
+    })
+
+    it('считает уникальные ключи, покрытие и пустые значения', () => {
+      const enDir = path.join(testDir, 'en')
+      const ruDir = path.join(testDir, 'ru')
+      fs.mkdirSync(enDir, { recursive: true })
+      fs.mkdirSync(ruDir, { recursive: true })
+
+      fs.writeFileSync(
+        path.join(enDir, 'common.json'),
+        JSON.stringify({ hello: 'Hello', bye: 'Bye' })
+      )
+      fs.writeFileSync(
+        path.join(ruDir, 'common.json'),
+        JSON.stringify({ hello: 'Привет', bye: '' })
+      )
+
+      const result = projectService.getAnalytics()
+
+      expect(result.totals.locales).toBe(2)
+      expect(result.totals.uniqueKeys).toBe(2)
+      expect(result.totals.emptyValues).toBe(1) // bye пустой в ru
+      expect(result.totals.orphanFiles).toBe(0)
+      expect(result.totals.orphanKeys).toBe(0)
+
+      const en = result.perLocale.find((l) => l.locale === 'en')!
+      const ru = result.perLocale.find((l) => l.locale === 'ru')!
+      expect(en.coveragePercent).toBe(100)
+      expect(ru.coveragePercent).toBe(50) // 1 из 2 переведён
+      expect(ru.emptyValues).toBe(1)
+    })
+
+    it('находит файлы-сироты и ключи-сироты', () => {
+      const enDir = path.join(testDir, 'en')
+      const ruDir = path.join(testDir, 'ru')
+      fs.mkdirSync(enDir, { recursive: true })
+      fs.mkdirSync(ruDir, { recursive: true })
+
+      fs.writeFileSync(path.join(enDir, 'common.json'), JSON.stringify({ a: '1', b: '2' }))
+      fs.writeFileSync(path.join(ruDir, 'common.json'), JSON.stringify({ a: 'А' }))
+      fs.writeFileSync(path.join(enDir, 'only-en.json'), JSON.stringify({ x: 'x' }))
+
+      const result = projectService.getAnalytics()
+
+      expect(result.totals.orphanFiles).toBe(1)
+      expect(result.orphanFiles[0].namespace).toBe('only-en')
+      expect(result.orphanFiles[0].missingLocales).toEqual(['ru'])
+
+      expect(result.totals.orphanKeys).toBeGreaterThan(0)
+      const orphanB = result.orphanKeys.find((k) => k.key === 'b')
+      expect(orphanB).toBeDefined()
+      expect(orphanB!.missingLocales).toEqual(['ru'])
+    })
+
+    it('находит дубликаты значений внутри локали', () => {
+      const enDir = path.join(testDir, 'en')
+      fs.mkdirSync(enDir, { recursive: true })
+      fs.writeFileSync(
+        path.join(enDir, 'common.json'),
+        JSON.stringify({ a: 'Save', b: 'Save', c: 'Cancel' })
+      )
+
+      const result = projectService.getAnalytics()
+
+      expect(result.totals.duplicateGroups).toBe(1)
+      expect(result.duplicates[0].value).toBe('Save')
+      expect(result.duplicates[0].occurrences).toHaveLength(2)
+    })
+
+    it('находит непереведённые ключи (совпадающие с sourceLocale)', () => {
+      const enDir = path.join(testDir, 'en')
+      const ruDir = path.join(testDir, 'ru')
+      fs.mkdirSync(enDir, { recursive: true })
+      fs.mkdirSync(ruDir, { recursive: true })
+
+      fs.writeFileSync(
+        path.join(enDir, 'common.json'),
+        JSON.stringify({ name: 'Name', email: 'Email', age: 'Age' })
+      )
+      fs.writeFileSync(
+        path.join(ruDir, 'common.json'),
+        JSON.stringify({ name: 'Имя', email: 'Email', age: 'Age' })
+      )
+
+      const result = projectService.getAnalytics('en')
+
+      expect(result.sourceLocale).toBe('en')
+      expect(result.untranslated).toHaveLength(2)
+      const emailEntry = result.untranslated.find((u) => u.key === 'email')
+      expect(emailEntry).toBeDefined()
+      expect(emailEntry!.locales).toEqual(['ru'])
+    })
+
+    it('корректно обрабатывает вложенные ключи', () => {
+      const enDir = path.join(testDir, 'en')
+      const ruDir = path.join(testDir, 'ru')
+      fs.mkdirSync(enDir, { recursive: true })
+      fs.mkdirSync(ruDir, { recursive: true })
+      fs.writeFileSync(
+        path.join(enDir, 'common.json'),
+        JSON.stringify({ button: { submit: 'Submit', cancel: 'Cancel' } })
+      )
+      fs.writeFileSync(
+        path.join(ruDir, 'common.json'),
+        JSON.stringify({ button: { submit: 'Отправить' } })
+      )
+
+      const result = projectService.getAnalytics()
+
+      expect(result.totals.uniqueKeys).toBe(2)
+      const orphan = result.orphanKeys.find((k) => k.key === 'button.cancel')
+      expect(orphan).toBeDefined()
+      expect(orphan!.missingLocales).toEqual(['ru'])
+    })
+  })
 })

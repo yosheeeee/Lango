@@ -53,6 +53,8 @@ export const api: ControllerHandler = {
     getAllNamespacesContent: (locale: string) =>
       ipcRenderer.invoke('project:getAllNamespacesContent', locale),
     search: (query: string, _limit = 50, _offset = 0) =>
-      ipcRenderer.invoke('project:search', query, _limit, _offset)
+      ipcRenderer.invoke('project:search', query, _limit, _offset),
+    getAnalytics: (sourceLocale?: string | null) =>
+      ipcRenderer.invoke('project:getAnalytics', sourceLocale ?? null)
   }
 }

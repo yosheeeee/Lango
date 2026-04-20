@@ -52,7 +52,15 @@ export default function EntryEditor({
   const [keyEditing, setKeyEditing] = useState(false)
 
   return (
-    <div className={cn('flex-col flex w-full gap-2', className)} {...props}>
+    <div
+      data-key={translationKey}
+      className={cn(
+        'flex-col flex w-full gap-2 rounded-md transition-colors',
+        'data-[highlight=true]:ring-2 data-[highlight=true]:ring-amber-500/70 data-[highlight=true]:bg-amber-500/5',
+        className
+      )}
+      {...props}
+    >
       <div className="px-3 flex text-gray-400 text-sm items-center gap-2">
         <p>{translationKey}</p>
         {!keyEditing && (
@@ -393,7 +401,11 @@ export function CollabsibleTranslationsEntry({
 
   return (
     <>
-      <Collapsible defaultOpen className="group">
+      <Collapsible
+        defaultOpen
+        data-key={translationKey}
+        className="group rounded-md transition-colors data-[highlight=true]:ring-2 data-[highlight=true]:ring-amber-500/70 data-[highlight=true]:bg-amber-500/5"
+      >
         <div className="flex items-center justify-between">
           {isRenaming ? (
             <ParentKeyRenameInput

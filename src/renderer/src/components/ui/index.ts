@@ -52,3 +52,6 @@ export {
   TableCaption
 } from './table'
 export { LanguageSwitcher } from './LanguageSwitcher'
+export { Badge } from './badge'
+export type { BadgeProps } from './badge'
+export { Progress } from './progress'

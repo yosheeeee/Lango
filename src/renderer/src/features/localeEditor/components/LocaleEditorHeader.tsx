@@ -8,10 +8,20 @@ import { useLocalizationStore } from '@renderer/stores/localizationStore'
 import { ChevronDown, Globe } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@renderer/components/ui/button'
+import { useNavigate } from 'react-router-dom'
+import { routerPaths } from '@renderer/router/routerPaths'
 
 export default function LocaleEditorHeader() {
   const { locales, currentLocale, setCurrentLocale } = useLocalizationStore()
+  const navigate = useNavigate()
   const { t } = useTranslation('master')
+
+  function onChange(locale: string) {
+    setCurrentLocale(locale)
+    navigate(
+      [routerPaths.editor, routerPaths.editorLocale.replace(':localeName', locale)].join('/')
+    )
+  }
 
   return (
     <section className="py-1 px-3 flex items-center justify-between border-b border-b-gray-700">
@@ -21,14 +31,14 @@ export default function LocaleEditorHeader() {
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button className="gap-1">
+          <Button className="gap-1 py-0.5">
             {currentLocale}
             <ChevronDown className="size-3" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           {locales?.map((locale) => (
-            <DropdownMenuItem key={locale} onClick={() => setCurrentLocale(locale)}>
+            <DropdownMenuItem key={locale} onClick={() => onChange(locale)}>
               {locale}
             </DropdownMenuItem>
           ))}

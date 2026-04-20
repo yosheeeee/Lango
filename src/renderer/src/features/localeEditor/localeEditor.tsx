@@ -253,7 +253,7 @@ export default function LocaleEditor() {
   })
 
   return (
-    <section id="locale-editor" className="flex-1 h-full flex flex-col gap-2 p-3">
+    <section id="locale-editor" className="flex-1 overflow-hidden flex flex-col gap-2 p-3">
       <div className="flex-1 h-full flex flex-col gap-4 overflow-hidden">
         <div className="flex w-full items-center justify-end">
           <ToggleGroup

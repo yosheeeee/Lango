@@ -3,8 +3,8 @@ import { ToggleGroup, ToggleGroupItem } from '@renderer/components/ui/toggleGrou
 import { MoveLeft, MoveRight } from 'lucide-react'
 import { useFileTreeStore } from '@renderer/stores/fileTreeStore'
 import { FileTreeGroup, FileTreeItem } from 'src/domain/models/fileTree'
-import { useParams, useNavigate } from 'react-router-dom'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { routerPaths } from '@renderer/router/routerPaths'
 import EntryEditor, { AddKeyButton, CollabsibleTranslationsEntry } from './components/EntryEditor'
 import { ActiveLocalizationSwitcher } from './activeLocalizationSwitcher'
@@ -101,6 +101,9 @@ export default function DetailEditor() {
   const { filePath } = useParams<{ filePath: string }>()
   const { content, orphanKeys, refresh } = useNamespaceContent(filePath)
   const [filter, setFilter] = useState<FilterType>('all')
+  const [searchParams] = useSearchParams()
+  const targetKey = searchParams.get('key')
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null)
 
   const nodes = useMemo(
     () => (filePath ? jsonToNodes(content, filePath, '', orphanKeys) : []),
@@ -112,9 +115,42 @@ export default function DetailEditor() {
     [nodes, filter, orphanKeys]
   )
 
+  // Автоматический скролл и подсветка ключа по ?key= query-параметру
+  useEffect(() => {
+    if (!targetKey) return
+    const container = scrollContainerRef.current
+    if (!container) return
+
+    let cancelled = false
+    let attempts = 0
+    const maxAttempts = 20
+
+    const findAndHighlight = (): void => {
+      if (cancelled) return
+      const el = container.querySelector<HTMLElement>(`[data-key="${CSS.escape(targetKey)}"]`)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        el.dataset.highlight = 'true'
+        setTimeout(() => {
+          if (!cancelled) delete el.dataset.highlight
+        }, 1800)
+        return
+      }
+      attempts += 1
+      if (attempts < maxAttempts) setTimeout(findAndHighlight, 80)
+    }
+
+    // Немного задержки, чтобы DOM успел отрендериться после получения контента
+    const t = setTimeout(findAndHighlight, 60)
+    return () => {
+      cancelled = true
+      clearTimeout(t)
+    }
+  }, [targetKey, content])
+
   return (
     <NamespaceCtx.Provider value={{ namespace: filePath ?? '', onRefresh: refresh, orphanKeys }}>
-      <section id="detail-editor" className="flex-1 h-full flex flex-col gap-2 p-3">
+      <section id="detail-editor" className="flex-1 overflow-hidden flex flex-col gap-2 p-3">
         <div className="flex-1 h-full flex flex-col gap-4 overflow-hidden">
           <div className="flex w-full items-center justify-between">
             <div className="flex items-end gap-2">
@@ -134,7 +170,7 @@ export default function DetailEditor() {
               <AddKeyButton />
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto flex flex-col gap-4">
+          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto flex flex-col gap-4">
             {filteredNodes.length === 0 ? (
               <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">
                 Ключи не найдены
@@ -211,7 +247,7 @@ function NavigateButtons() {
   const { onMoveNext, onMovePrev, hasNext, hasPrev } = useNamespaceNavigation()
 
   return (
-    <div className="flex items-center justify-between gap-2.5">
+    <div className="flex items-center justify-between gap-2.5 shrink-0">
       <Button onClick={onMovePrev} disabled={!hasPrev}>
         <MoveLeft /> Prev
       </Button>

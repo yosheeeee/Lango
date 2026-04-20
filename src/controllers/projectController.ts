@@ -185,6 +185,14 @@ ipcMain.handle('project:search', async (_, query: string, limit = 50, offset = 0
   return await projectService.search(query, limit, offset)
 })
 
+// Агрегированная аналитика проекта
+ipcMain.handle('project:getAnalytics', (_, sourceLocale?: string | null) => {
+  const session = sessionService.getCurrentSession()
+  if (!session) return null
+  const projectService = new ProjectService(session.path)
+  return projectService.getAnalytics(sourceLocale ?? null)
+})
+
 type Service = typeof projectServiceStub
 
 // Stub for type inference — used only via `typeof` in Service type
@@ -223,7 +231,9 @@ const projectServiceStub = {
       _u: typeof locale
     },
   search: (_: string, _limit?: number, _offset?: number) =>
-    void (_ + String(_limit) + String(_offset))
+    void (_ + String(_limit) + String(_offset)),
+  getAnalytics: (sourceLocale?: string | null) =>
+    null as (ReturnType<ProjectService['getAnalytics']> & { _u: typeof sourceLocale }) | null
 }
 /* eslint-enable @typescript-eslint/no-unused-vars */
 

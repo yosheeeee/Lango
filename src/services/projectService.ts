@@ -3,6 +3,15 @@ import path from 'path'
 import { CheckProjectStructureErrors } from '../domain/models/errors'
 import { FileTreeData, FileTreeGroup, FileTreeItem } from '../domain/models/fileTree'
 import { SearchMatch, SearchResult } from '../domain/models/search'
+import {
+  DuplicateValueEntry,
+  EmptyValueEntry,
+  LocaleCoverage,
+  OrphanFileEntry,
+  OrphanKeyEntry,
+  ProjectAnalytics,
+  UntranslatedEntry
+} from '../domain/models/analytics'
 
 export class ProjectService {
   private projectPath: string
@@ -646,6 +655,209 @@ export class ProjectService {
       } catch {
         // ignore
       }
+    }
+  }
+
+  /**
+   * Агрегированная аналитика проекта: один проход по всем локалям/неймспейсам.
+   * @param sourceLocale — если задан, заполняется секция `untranslated` (ключи,
+   *   значения которых в других локалях идентичны sourceLocale).
+   */
+  getAnalytics(sourceLocale?: string | null): ProjectAnalytics {
+    const locales = this.getLocaleFolders()
+    const emptyResult: ProjectAnalytics = {
+      totals: {
+        locales: 0,
+        namespaces: 0,
+        uniqueKeys: 0,
+        totalKeyInstances: 0,
+        orphanFiles: 0,
+        orphanKeys: 0,
+        emptyValues: 0,
+        duplicateGroups: 0,
+        untranslatedKeys: 0
+      },
+      perLocale: [],
+      orphanFiles: [],
+      orphanKeys: [],
+      emptyValues: [],
+      duplicates: [],
+      untranslated: [],
+      sourceLocale: null
+    }
+    if (locales.length === 0) return emptyResult
+
+    const effectiveSourceLocale =
+      sourceLocale && locales.includes(sourceLocale) ? sourceLocale : null
+
+    // 1) Читаем всё содержимое: locale -> namespace -> json
+    const perLocaleContent: Record<string, Record<string, Record<string, unknown>>> = {}
+    const allNamespaces = new Set<string>()
+    for (const locale of locales) {
+      const content = this.getAllNamespacesContent(locale)
+      perLocaleContent[locale] = content
+      for (const ns of Object.keys(content)) allNamespaces.add(ns)
+    }
+
+    const namespaces = [...allNamespaces].sort()
+
+    const orphanFiles: OrphanFileEntry[] = []
+    const orphanKeys: OrphanKeyEntry[] = []
+    const emptyValues: EmptyValueEntry[] = []
+    const untranslated: UntranslatedEntry[] = []
+
+    // locale -> Set<"namespace.key"> (присутствует)
+    const localePresentKeys: Record<string, Set<string>> = {}
+    // locale -> count пустых значений
+    const localeEmptyCount: Record<string, number> = {}
+    for (const l of locales) {
+      localePresentKeys[l] = new Set()
+      localeEmptyCount[l] = 0
+    }
+
+    // 2) Дубликаты: locale -> Map<value, [{ns, key}]>
+    const duplicateMaps: Record<string, Map<string, { namespace: string; key: string }[]>> = {}
+    for (const l of locales) duplicateMaps[l] = new Map()
+
+    let totalKeyInstances = 0
+    const uniqueKeySet = new Set<string>()
+
+    for (const namespace of namespaces) {
+      // какие локали содержат этот файл
+      const presentLocales = locales.filter((l) => namespace in perLocaleContent[l])
+      const missingFileLocales = locales.filter((l) => !(namespace in perLocaleContent[l]))
+      if (missingFileLocales.length > 0) {
+        orphanFiles.push({
+          namespace,
+          presentLocales,
+          missingLocales: missingFileLocales
+        })
+      }
+
+      // key -> Map<locale, value>
+      const keyMap = new Map<string, Map<string, string>>()
+
+      for (const locale of presentLocales) {
+        const json = perLocaleContent[locale][namespace] ?? {}
+        const leafKeys = this.flattenLeafKeys(json, '')
+        for (const key of leafKeys) {
+          const rawValue = this.getNestedValue(json, key.split('.'))
+          const value = typeof rawValue === 'string' ? rawValue : ''
+          if (!keyMap.has(key)) keyMap.set(key, new Map())
+          keyMap.get(key)!.set(locale, value)
+
+          const combined = `${namespace}::${key}`
+          uniqueKeySet.add(combined)
+          totalKeyInstances += 1
+          localePresentKeys[locale].add(combined)
+          if (value === '') localeEmptyCount[locale] += 1
+
+          // Для дубликатов — игнорируем пустые строки
+          if (value !== '') {
+            const bucket = duplicateMaps[locale].get(value)
+            if (bucket) bucket.push({ namespace, key })
+            else duplicateMaps[locale].set(value, [{ namespace, key }])
+          }
+        }
+      }
+
+      // Проходим по собранным ключам неймспейса
+      for (const [key, localeValues] of keyMap) {
+        const keyPresentLocales = [...localeValues.keys()].sort()
+        const keyMissingLocales = locales.filter((l) => !localeValues.has(l))
+        if (keyMissingLocales.length > 0) {
+          orphanKeys.push({
+            namespace,
+            key,
+            presentLocales: keyPresentLocales,
+            missingLocales: keyMissingLocales
+          })
+        }
+
+        // Пустые значения
+        const emptyLocales: string[] = []
+        for (const [loc, v] of localeValues) if (v === '') emptyLocales.push(loc)
+        if (emptyLocales.length > 0) {
+          emptyValues.push({ namespace, key, emptyLocales: emptyLocales.sort() })
+        }
+
+        // Непереведённые
+        if (effectiveSourceLocale && localeValues.has(effectiveSourceLocale)) {
+          const srcValue = localeValues.get(effectiveSourceLocale)!
+          if (srcValue !== '') {
+            const matchingLocales: string[] = []
+            for (const [loc, v] of localeValues) {
+              if (loc === effectiveSourceLocale) continue
+              if (v === srcValue) matchingLocales.push(loc)
+            }
+            if (matchingLocales.length > 0) {
+              untranslated.push({
+                namespace,
+                key,
+                value: srcValue,
+                locales: matchingLocales.sort()
+              })
+            }
+          }
+        }
+      }
+    }
+
+    // 3) Покрытие по локалям
+    const uniqueKeysCount = uniqueKeySet.size
+    const perLocale: LocaleCoverage[] = locales.map((locale) => {
+      const presentKeys = localePresentKeys[locale].size
+      const emptyValuesCount = localeEmptyCount[locale]
+      const translated = presentKeys - emptyValuesCount
+      const coveragePercent = uniqueKeysCount === 0 ? 100 : (translated / uniqueKeysCount) * 100
+      return {
+        locale,
+        totalKeys: uniqueKeysCount,
+        presentKeys,
+        missingKeys: uniqueKeysCount - presentKeys,
+        emptyValues: emptyValuesCount,
+        coveragePercent: Math.round(coveragePercent * 10) / 10
+      }
+    })
+
+    // 4) Дубликаты: оставляем группы > 1
+    const duplicates: DuplicateValueEntry[] = []
+    for (const locale of locales) {
+      for (const [value, occurrences] of duplicateMaps[locale]) {
+        if (occurrences.length > 1) {
+          duplicates.push({ locale, value, occurrences })
+        }
+      }
+    }
+    duplicates.sort((a, b) => b.occurrences.length - a.occurrences.length)
+
+    // 5) Сортируем стабильно
+    orphanFiles.sort((a, b) => a.namespace.localeCompare(b.namespace))
+    orphanKeys.sort((a, b) => a.namespace.localeCompare(b.namespace) || a.key.localeCompare(b.key))
+    emptyValues.sort((a, b) => a.namespace.localeCompare(b.namespace) || a.key.localeCompare(b.key))
+    untranslated.sort(
+      (a, b) => a.namespace.localeCompare(b.namespace) || a.key.localeCompare(b.key)
+    )
+
+    return {
+      totals: {
+        locales: locales.length,
+        namespaces: namespaces.length,
+        uniqueKeys: uniqueKeysCount,
+        totalKeyInstances,
+        orphanFiles: orphanFiles.length,
+        orphanKeys: orphanKeys.length,
+        emptyValues: emptyValues.length,
+        duplicateGroups: duplicates.length,
+        untranslatedKeys: untranslated.length
+      },
+      perLocale,
+      orphanFiles,
+      orphanKeys,
+      emptyValues,
+      duplicates,
+      untranslated,
+      sourceLocale: effectiveSourceLocale
     }
   }
 
