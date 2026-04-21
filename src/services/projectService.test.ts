@@ -477,5 +477,71 @@ describe('ProjectService', () => {
       expect(orphan).toBeDefined()
       expect(orphan!.missingLocales).toEqual(['ru'])
     })
+
+    it('не помечает ключи как сиротские при одинаковом наборе ключей в разном порядке (flat)', async () => {
+      const enDir = path.join(testDir, 'en')
+      const ruDir = path.join(testDir, 'ru')
+      fs.mkdirSync(enDir, { recursive: true })
+      fs.mkdirSync(ruDir, { recursive: true })
+
+      fs.writeFileSync(path.join(enDir, 'common.json'), JSON.stringify({ a: '1', b: '2', c: '3' }))
+      fs.writeFileSync(path.join(ruDir, 'common.json'), JSON.stringify({ c: 'C', a: 'A', b: 'B' }))
+
+      const namespaceOrphans = projectService.getNamespaceOrphanKeys('common')
+      expect(namespaceOrphans).toEqual([])
+
+      const result = await projectService.getAnalyticsAsync()
+      expect(result.totals.orphanKeys).toBe(0)
+      expect(result.orphanKeys).toEqual([])
+    })
+
+    it('не помечает ключи как сиротские при одинаковом наборе вложенных ключей в разном порядке', async () => {
+      const enDir = path.join(testDir, 'en')
+      const ruDir = path.join(testDir, 'ru')
+      fs.mkdirSync(enDir, { recursive: true })
+      fs.mkdirSync(ruDir, { recursive: true })
+
+      fs.writeFileSync(
+        path.join(enDir, 'common.json'),
+        JSON.stringify({ btn: { save: 'Save', cancel: 'Cancel' }, hi: 'Hi' })
+      )
+      fs.writeFileSync(
+        path.join(ruDir, 'common.json'),
+        JSON.stringify({ hi: 'Привет', btn: { cancel: 'Отмена', save: 'Сохранить' } })
+      )
+
+      const namespaceOrphans = projectService.getNamespaceOrphanKeys('common')
+      expect(namespaceOrphans).toEqual([])
+
+      const result = await projectService.getAnalyticsAsync()
+      expect(result.totals.orphanKeys).toBe(0)
+      expect(result.orphanKeys).toEqual([])
+    })
+
+    it('при shape mismatch (лист vs объект) оба варианта попадают в сироты', async () => {
+      // Документирует текущее поведение: `btn` (только en) и `btn.save` (только ru)
+      // флагаются как сиротские, т. к. это разные полные пути.
+      const enDir = path.join(testDir, 'en')
+      const ruDir = path.join(testDir, 'ru')
+      fs.mkdirSync(enDir, { recursive: true })
+      fs.mkdirSync(ruDir, { recursive: true })
+
+      fs.writeFileSync(path.join(enDir, 'common.json'), JSON.stringify({ btn: 'Save' }))
+      fs.writeFileSync(
+        path.join(ruDir, 'common.json'),
+        JSON.stringify({ btn: { save: 'Сохранить' } })
+      )
+
+      const namespaceOrphans = projectService.getNamespaceOrphanKeys('common').sort()
+      expect(namespaceOrphans).toEqual(['btn', 'btn.save'])
+
+      const result = await projectService.getAnalyticsAsync()
+      const orphanBtn = result.orphanKeys.find((k) => k.key === 'btn')
+      const orphanBtnSave = result.orphanKeys.find((k) => k.key === 'btn.save')
+      expect(orphanBtn).toBeDefined()
+      expect(orphanBtn!.missingLocales).toEqual(['ru'])
+      expect(orphanBtnSave).toBeDefined()
+      expect(orphanBtnSave!.missingLocales).toEqual(['en'])
+    })
   })
 })
