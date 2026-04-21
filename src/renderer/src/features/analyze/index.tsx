@@ -9,9 +9,11 @@ import OrphanKeysSection from './components/OrphanKeysSection'
 import StatsCards from './components/StatsCards'
 import UntranslatedSection from './components/UntranslatedSection'
 import { useAnalytics } from './hooks/useAnalytics'
+import { useTranslation } from 'react-i18next'
 
 export default function AnalyzePage() {
   const { data, isLoading, error } = useAnalytics()
+  const { t } = useTranslation('analyze')
 
   const locales = data?.perLocale.map((p) => p.locale) ?? []
   const hasProject = data !== null
@@ -24,15 +26,15 @@ export default function AnalyzePage() {
         {isLoading && !data && (
           <div className="flex items-center justify-center gap-2 p-10 text-sm text-gray-400">
             <Loader2 className="size-4 animate-spin" />
-            Analyzing project…
+            {t('analyzing')}
           </div>
         )}
 
         {!isLoading && !hasProject && (
           <EmptyState
             icon={FileQuestion}
-            title="No project data"
-            description="Open a project or create locales to see analytics."
+            title={t('noProjectData')}
+            description={t('noProjectDataDesc')}
           />
         )}
 
@@ -49,7 +51,7 @@ export default function AnalyzePage() {
 
             {singleLocale ? (
               <div className="p-3 rounded-md border border-cyan-900 bg-cyan-950/30 text-sm text-cyan-200">
-                Only one locale detected — orphan file / key detection is unavailable.
+                {t('singleLocaleWarning')}
               </div>
             ) : (
               <>

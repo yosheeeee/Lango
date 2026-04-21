@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocalizationStore } from '@renderer/stores/localizationStore'
 import { LocaleRow } from './LocaleRow'
+import { useTranslation } from 'react-i18next'
 
 type LocaleTranslationsContentProps = {
   namespace: string
@@ -13,6 +14,7 @@ export function LocaleTranslationsContent({
 }: LocaleTranslationsContentProps) {
   const { currentLocale } = useLocalizationStore()
   const [translations, setTranslations] = useState<Record<string, string> | null>(null)
+  const { t } = useTranslation('common')
 
   useEffect(() => {
     window.api.project.getKeyTranslations(namespace, translationKey).then(setTranslations)
@@ -24,13 +26,13 @@ export function LocaleTranslationsContent({
   }
 
   if (!translations) {
-    return <p className="p-3 text-xs text-gray-400">Loading…</p>
+    return <p className="p-3 text-xs text-gray-400">{t('loading')}</p>
   }
 
   const otherLocales = Object.entries(translations).filter(([locale]) => locale !== currentLocale)
 
   if (otherLocales.length === 0) {
-    return <p className="p-3 text-xs text-gray-400">No other locales.</p>
+    return <p className="p-3 text-xs text-gray-400">{t('noOtherLocales')}</p>
   }
 
   return (

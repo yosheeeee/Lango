@@ -11,10 +11,12 @@ import { useAnalyticsStore } from '@renderer/stores/analyticsStore'
 import { useLocalizationStore } from '@renderer/stores/localizationStore'
 import { ChevronDown, RefreshCw, Sparkles, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 export default function AnalyzeHeader() {
   const { sourceLocale, setSourceLocale, fetchAnalytics, isLoading } = useAnalyticsStore()
   const { locales } = useLocalizationStore()
+  const { t } = useTranslation('analyze')
 
   return (
     <header
@@ -23,11 +25,11 @@ export default function AnalyzeHeader() {
     >
       <div className="flex items-center gap-2">
         <Sparkles className="text-cyan-300" />
-        <p className="font-medium">Project Analyze</p>
+        <p className="font-medium">{t('title')}</p>
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="text-xs text-gray-400">Source locale:</span>
+        <span className="text-xs text-gray-400">{t('sourceLocale')}</span>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-gray-800 hover:bg-gray-700 cursor-pointer text-xs">
@@ -37,14 +39,14 @@ export default function AnalyzeHeader() {
                   <span>{sourceLocale}</span>
                 </>
               ) : (
-                <span className="text-gray-400">Not set</span>
+                <span className="text-gray-400">{t('notSet')}</span>
               )}
               <ChevronDown className="size-3.5" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => setSourceLocale(null)}>
-              <span className="text-gray-400">— None —</span>
+              <span className="text-gray-400">— {t('none')} —</span>
             </DropdownMenuItem>
             {locales.map((l) => (
               <DropdownMenuItem
@@ -66,7 +68,7 @@ export default function AnalyzeHeader() {
           className="!py-1 !px-2"
         >
           <RefreshCw className={isLoading ? 'animate-spin' : ''} />
-          Refresh
+          {t('refresh')}
         </Button>
 
         <Link

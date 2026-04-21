@@ -4,6 +4,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/ui
 import { cn } from '@renderer/utils/cn'
 import { ArrowRight } from 'lucide-react'
 import { FC, ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 
 type ProblemRowProps = {
   namespace: string
@@ -28,6 +29,7 @@ export const ProblemRow: FC<ProblemRowProps> = ({
   onNavigate,
   rightActions
 }) => {
+  const { t } = useTranslation('analyze', { keyPrefix: 'section' })
   return (
     <div className="flex items-center gap-2 px-3 py-2 hover:bg-gray-800/40 transition-colors">
       <div className="flex-1 min-w-0 flex flex-col gap-1">
@@ -80,7 +82,7 @@ export const ProblemRow: FC<ProblemRowProps> = ({
               </button>
             </TooltipTrigger>
             <TooltipContent side="top">
-              <p>Open</p>
+              <p>{t('open')}</p>
             </TooltipContent>
           </Tooltip>
         )}

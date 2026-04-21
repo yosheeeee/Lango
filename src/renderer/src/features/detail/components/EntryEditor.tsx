@@ -35,6 +35,7 @@ import { EditRowButton } from './EditRowButton'
 import { LocaleTranslationsContent } from './LocaleTranslationsContent'
 import { ParentKeyRenameInput } from './ParentKeyRenameInput'
 import { KeyEditor } from './KeyEditor'
+import { useTranslation } from 'react-i18next'
 
 type EntryEditorProps = ValueEditorProps & ComponentProps<'div'>
 export default function EntryEditor({
@@ -46,6 +47,7 @@ export default function EntryEditor({
   ...props
 }: EntryEditorProps) {
   const [keyEditing, setKeyEditing] = useState(false)
+  const { t } = useTranslation('editor', { keyPrefix: 'keyActions' })
 
   return (
     <div
@@ -70,7 +72,7 @@ export default function EntryEditor({
               </button>
             </TooltipTrigger>
             <TooltipContent side="right">
-              <p>Edit key</p>
+              <p>{t('edit')}</p>
             </TooltipContent>
           </Tooltip>
         )}
@@ -105,6 +107,7 @@ function ValueEditor({ currentLocalizationValue, translationKey, isOrphan }: Val
   const { currentLocale } = useLocalizationStore()
   const [value, setValue] = useState(currentLocalizationValue)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const { t } = useTranslation('editor', { keyPrefix: 'keyActions' })
 
   const isDirty = value !== currentLocalizationValue
 
@@ -210,7 +213,7 @@ function ValueEditor({ currentLocalizationValue, translationKey, isOrphan }: Val
               </EditRowButton>
             </TooltipTrigger>
             <TooltipContent side="top">
-              <p>Fix orphan key</p>
+              <p>{t('fixOrphan')}</p>
             </TooltipContent>
           </Tooltip>
         )}
@@ -224,7 +227,7 @@ function ValueEditor({ currentLocalizationValue, translationKey, isOrphan }: Val
             </EditRowButton>
           </TooltipTrigger>
           <TooltipContent side="top">
-            <p>Delete key</p>
+            <p>{t('delete')}</p>
           </TooltipContent>
         </Tooltip>
       </div>
@@ -252,6 +255,7 @@ export function AddKeyButton({ parentKey, variant = 'default' }: AddKeyButtonPro
   const [keyType, setKeyType] = useState<KeyType>('translation')
   const [keyName, setKeyName] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  const { t } = useTranslation('editor', { keyPrefix: 'addKey' })
 
   function handleSelectType(type: KeyType) {
     setKeyType(type)
@@ -287,7 +291,7 @@ export function AddKeyButton({ parentKey, variant = 'default' }: AddKeyButtonPro
     ) : (
       <Button size="sm">
         <Plus />
-        Add Key
+        {t('button')}
       </Button>
     )
 
@@ -300,17 +304,17 @@ export function AddKeyButton({ parentKey, variant = 'default' }: AddKeyButtonPro
         <DropdownMenuContent align={variant === 'small' ? 'end' : 'start'}>
           <DropdownMenuItem onSelect={() => handleSelectType('translation')}>
             <Type />
-            Translation Key
+            {t('translation')}
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => handleSelectType('parent')}>
             <FolderPlus />
-            Parent Key
+            {t('parent')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenuPrimitive.Root>
       <PopoverContent className="w-72 p-3" align="start" onFocusOutside={(e) => e.preventDefault()}>
         <p className="text-xs text-gray-400 mb-2">
-          {keyType === 'parent' ? 'New parent key name:' : 'New translation key name:'}
+          {keyType === 'parent' ? t('parentName') : t('translationName')}
         </p>
         <div className="flex gap-1.5">
           <Input
@@ -347,6 +351,7 @@ export function CollabsibleTranslationsEntry({
   const ctx = useContext(NamespaceCtx)
   const [isRenaming, setIsRenaming] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const { t } = useTranslation('editor', { keyPrefix: 'keyActions' })
 
   async function handleConfirmDelete() {
     if (!ctx) return
@@ -387,7 +392,7 @@ export function CollabsibleTranslationsEntry({
                 </EditRowButton>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Edit key</p>
+                <p>{t('edit')}</p>
               </TooltipContent>
             </Tooltip>
             <AddKeyButton parentKey={translationKey} variant="small" />
@@ -401,7 +406,7 @@ export function CollabsibleTranslationsEntry({
                 </EditRowButton>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Delete key</p>
+                <p>{t('delete')}</p>
               </TooltipContent>
             </Tooltip>
           </div>

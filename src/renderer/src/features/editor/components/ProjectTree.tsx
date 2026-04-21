@@ -4,6 +4,7 @@ import { FileTreeGroup } from '@renderer/components/project/FileTree'
 import { treePanelRef } from '@renderer/stores/visibilityStore'
 import { useSessionStore } from '@renderer/stores/sessionStore'
 import { useFileTreeStore } from '@renderer/stores/fileTreeStore'
+import { useTranslation } from 'react-i18next'
 
 function getVisibleItems(container: HTMLElement): HTMLElement[] {
   return Array.from(container.querySelectorAll<HTMLElement>('[data-tree-item]')).filter(
@@ -15,6 +16,7 @@ export default function ProjectTree() {
   const ref = treePanelRef
   const { currentSession } = useSessionStore()
   const { root, isLoading, fetchTree, invalidateTree } = useFileTreeStore()
+  const { t } = useTranslation('editor', { keyPrefix: 'projectTree' })
 
   useEffect(() => {
     fetchTree()
@@ -133,7 +135,7 @@ export default function ProjectTree() {
         tabIndex={0}
         className="flex items-center justify-center h-full w-full px-4 py-3 min-w-max outline-none text-gray-400"
       >
-        No project selected
+        {t('noProject')}
       </section>
     )
   }
@@ -146,7 +148,7 @@ export default function ProjectTree() {
         tabIndex={0}
         className="flex items-center justify-center h-full w-full px-4 py-3 min-w-max outline-none text-gray-400"
       >
-        Loading...
+        {t('loading')}
       </section>
     )
   }
@@ -159,7 +161,7 @@ export default function ProjectTree() {
         tabIndex={0}
         className="flex items-center justify-center h-full w-full px-4 py-3 min-w-max outline-none text-gray-400"
       >
-        No localization folders found
+        {t('noFolders')}
       </section>
     )
   }

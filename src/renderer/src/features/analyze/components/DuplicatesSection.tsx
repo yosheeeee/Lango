@@ -7,6 +7,7 @@ import { DuplicateValueEntry } from 'src/domain/models/analytics'
 import { ProblemRow } from './ProblemRow'
 import { ProblemSection, SectionRowList } from './ProblemSection'
 import { useSectionState } from '../hooks/useSectionState'
+import { useTranslation } from 'react-i18next'
 
 type Props = {
   items: DuplicateValueEntry[]
@@ -16,6 +17,7 @@ type Props = {
 export default function DuplicatesSection({ items, locales }: Props) {
   const { search, setSearch, localeFilter, setLocaleFilter } = useSectionState()
   const navigate = useNavigate()
+  const { t } = useTranslation('analyze', { keyPrefix: 'duplicates' })
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -32,7 +34,7 @@ export default function DuplicatesSection({ items, locales }: Props) {
 
   return (
     <ProblemSection
-      title="Duplicate values"
+      title={t('title')}
       icon={Copy}
       tone="amber"
       count={filtered.length}
@@ -42,7 +44,7 @@ export default function DuplicatesSection({ items, locales }: Props) {
       locales={locales}
       localeFilter={localeFilter}
       onLocaleFilterChange={setLocaleFilter}
-      emptyText="No duplicated values found."
+      emptyText={t('empty')}
     >
       <SectionRowList>
         {filtered.map((d, idx) => (
@@ -58,7 +60,7 @@ export default function DuplicatesSection({ items, locales }: Props) {
               <span className="text-gray-600">·</span>
               <span className="font-mono text-amber-200 truncate">&quot;{d.value}&quot;</span>
               <span className="ml-auto text-[11px] text-gray-500">
-                {d.occurrences.length} occurrences
+                {t('occurrences', { count: d.occurrences.length })}
               </span>
             </div>
             <div className="flex flex-col gap-1 pl-4 border-l border-l-gray-800">

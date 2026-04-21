@@ -65,7 +65,7 @@ export default function ProjectLocalizations() {
   if (!currentSession) {
     return (
       <ResizablePanel defaultSize={'30%'} minSize={'100px'}>
-        <p className="flex items-center justify-center h-full text-gray-400">No project selected</p>
+        <p className="flex items-center justify-center h-full text-gray-400">{t('noProject')}</p>
       </ResizablePanel>
     )
   }
@@ -73,7 +73,7 @@ export default function ProjectLocalizations() {
   if (isLoading && locales.length === 0) {
     return (
       <ResizablePanel defaultSize={'30%'} minSize={'100px'}>
-        <p className="flex items-center justify-center h-full text-gray-400">Loading...</p>
+        <p className="flex items-center justify-center h-full text-gray-400">{t('loading')}</p>
       </ResizablePanel>
     )
   }

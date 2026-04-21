@@ -22,6 +22,7 @@ export default function EditorFooter() {
 function RightGroup() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
+  const { t } = useTranslation('footer', { keyPrefix: 'editorMode' })
   const isAnalyze = pathname.includes('analyze')
   function onChangeRoute() {
     navigate(
@@ -37,12 +38,12 @@ function RightGroup() {
         {isAnalyze ? (
           <>
             <Pen className="size-4" />
-            Editor
+            {t('editor')}
           </>
         ) : (
           <>
             <Sparkles className="size-4" />
-            Analyze
+            {t('analyze')}
           </>
         )}
       </button>
@@ -52,6 +53,7 @@ function RightGroup() {
 
 function LocalizationGroup() {
   const { locales } = useLocalizationStore()
+  const { t } = useTranslation('footer', { keyPrefix: 'localization' })
   // Если пользователь уже открывал страницу Analyze — analyticsStore содержит
   // данные; покажем точное число. Иначе не триггерим тяжёлый getAnalytics.
   const data = useAnalyticsStore((s) => s.data)
@@ -59,13 +61,9 @@ function LocalizationGroup() {
 
   return (
     <FooterGroup>
-      <FooterFileTreeItem text={'Localizations'} Icon={Globe} count={locales?.length ?? 0} />
+      <FooterFileTreeItem text={t('title')} Icon={Globe} count={locales?.length ?? 0} />
       <FooterFileTreeItem
-        text={
-          missingKeys === null
-            ? 'Missing keys (open Analyze for details)'
-            : 'Missing keys (orphan + empty)'
-        }
+        text={missingKeys === null ? t('missingKeys.unknown') : t('missingKeys.known')}
         Icon={LockKeyholeOpen}
         count={missingKeys ?? '—'}
       />

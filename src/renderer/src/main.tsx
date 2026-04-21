@@ -11,9 +11,11 @@ import { ErrorBoundary } from '@renderer/components/ui/ErrorBoundary'
 import { initI18n } from './utils/i18n'
 import { initializeSessionStore } from './stores/sessionStore'
 import { initializeLanguageStore } from './stores/languageStore'
+import { useTranslation } from 'react-i18next'
 
 function LoadingFallback() {
-  return <div className="flex items-center justify-center min-h-screen">Loading...</div>
+  const { t } = useTranslation('common')
+  return <div className="flex items-center justify-center min-h-screen">{t('loading')}</div>
 }
 
 async function startApp(): Promise<void> {

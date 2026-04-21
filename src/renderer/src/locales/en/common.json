@@ -1,5 +1,10 @@
 {
   "sumbit": "Submit",
   "cancel": "Cancel",
-  "delete": "Delete"
+  "delete": "Delete",
+  "loading": "Loading...",
+  "noOtherLocales": "No other locales.",
+  "error": "Something went wrong",
+  "reload": "Reload",
+  "close": "Close"
 }

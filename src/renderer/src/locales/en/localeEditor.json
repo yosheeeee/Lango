@@ -1,0 +1,13 @@
+{
+  "filter": {
+    "all": "All keys",
+    "empty": "Not filled",
+    "orphan": "Orphans"
+  },
+  "navigation": {
+    "prev": "Prev",
+    "next": "Next"
+  },
+  "noKeys": "Keys not found",
+  "currentLocalization": "Current Localization:"
+}

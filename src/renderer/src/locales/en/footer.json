@@ -2,5 +2,16 @@
   "filesTree": {
     "total": "Total namespaces",
     "orphans": "Orphan namespaces"
+  },
+  "localization": {
+    "title": "Localizations",
+    "missingKeys": {
+      "unknown": "Missing keys (open Analyze for details)",
+      "known": "Missing keys (orphan + empty)"
+    }
+  },
+  "editorMode": {
+    "editor": "Editor",
+    "analyze": "Analyze"
   }
 }

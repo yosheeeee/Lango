@@ -10,6 +10,7 @@ import EntryEditor, { AddKeyButton, CollabsibleTranslationsEntry } from './compo
 import { ActiveLocalizationSwitcher } from './activeLocalizationSwitcher'
 import { useLocalizationStore } from '@renderer/stores/localizationStore'
 import { NamespaceCtx } from './namespaceContext'
+import { useTranslation } from 'react-i18next'
 
 type ValueEditorNode = {
   namespace: string
@@ -104,6 +105,8 @@ export default function DetailEditor() {
   const [searchParams] = useSearchParams()
   const targetKey = searchParams.get('key')
   const scrollContainerRef = useRef<HTMLDivElement | null>(null)
+  const { t } = useTranslation('localeEditor', { keyPrefix: 'filter' })
+  const { t: tGeneral } = useTranslation('localeEditor')
 
   const nodes = useMemo(
     () => (filePath ? jsonToNodes(content, filePath, '', orphanKeys) : []),
@@ -154,7 +157,7 @@ export default function DetailEditor() {
         <div className="flex-1 h-full flex flex-col gap-4 overflow-hidden">
           <div className="flex w-full items-center justify-between">
             <div className="flex items-end gap-2">
-              <p className="text-xl">Current Localization:</p>
+              <p className="text-xl">{tGeneral('currentLocalization')}</p>
               {ActiveLocalizationSwitcher && <ActiveLocalizationSwitcher />}
             </div>
             <div className="flex items-center gap-2">
@@ -163,9 +166,9 @@ export default function DetailEditor() {
                 value={filter}
                 onValueChange={(v) => v && setFilter(v as FilterType)}
               >
-                <ToggleGroupItem value="all">Все ключи</ToggleGroupItem>
-                <ToggleGroupItem value="empty">Не заполненные</ToggleGroupItem>
-                <ToggleGroupItem value="orphan">Сироты</ToggleGroupItem>
+                <ToggleGroupItem value="all">{t('all')}</ToggleGroupItem>
+                <ToggleGroupItem value="empty">{t('empty')}</ToggleGroupItem>
+                <ToggleGroupItem value="orphan">{t('orphan')}</ToggleGroupItem>
               </ToggleGroup>
               <AddKeyButton />
             </div>
@@ -173,7 +176,7 @@ export default function DetailEditor() {
           <div ref={scrollContainerRef} className="flex-1 overflow-y-auto flex flex-col gap-4">
             {filteredNodes.length === 0 ? (
               <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">
-                Ключи не найдены
+                {tGeneral('noKeys')}
               </div>
             ) : (
               filteredNodes.map((node) =>
@@ -245,14 +248,15 @@ function useNamespaceNavigation() {
 
 function NavigateButtons() {
   const { onMoveNext, onMovePrev, hasNext, hasPrev } = useNamespaceNavigation()
+  const { t } = useTranslation('localeEditor', { keyPrefix: 'navigation' })
 
   return (
     <div className="flex items-center justify-between gap-2.5 shrink-0">
       <Button onClick={onMovePrev} disabled={!hasPrev}>
-        <MoveLeft /> Prev
+        <MoveLeft /> {t('prev')}
       </Button>
       <Button onClick={onMoveNext} disabled={!hasNext}>
-        Next
+        {t('next')}
         <MoveRight />
       </Button>
     </div>

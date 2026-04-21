@@ -17,6 +17,7 @@ import EntryEditor, {
   CollabsibleTranslationsEntry
 } from '@renderer/features/detail/components/EntryEditor'
 import { cn } from '@renderer/utils/cn'
+import { useTranslation } from 'react-i18next'
 
 type ValueEditorNode = {
   namespace: string
@@ -163,6 +164,7 @@ function NamespaceSection({
   onRefresh: () => void
 }) {
   const [open, setOpen] = useState(true)
+  const { t } = useTranslation('localeEditor')
 
   const nodes = useMemo(
     () => jsonToNodes(content, namespace, '', orphanKeys),
@@ -191,7 +193,7 @@ function NamespaceSection({
         </CollapsibleTrigger>
         <CollapsibleContent className="flex flex-col gap-4 pl-4">
           {filteredNodes.length === 0 ? (
-            <p className="text-gray-500 text-sm py-2 text-center">Ключи не найдены</p>
+            <p className="text-gray-500 text-sm py-2 text-center">{t('noKeys')}</p>
           ) : (
             filteredNodes.map((node) =>
               'childNodes' in node ? (
@@ -209,14 +211,15 @@ function NamespaceSection({
 
 function NavigateButtons() {
   const { onMoveNext, onMovePrev, hasNext, hasPrev } = useLocaleNavigation()
+  const { t } = useTranslation('localeEditor', { keyPrefix: 'navigation' })
 
   return (
     <div className="flex items-center justify-between gap-2.5">
       <Button onClick={onMovePrev} disabled={!hasPrev}>
-        <MoveLeft /> Prev
+        <MoveLeft /> {t('prev')}
       </Button>
       <Button onClick={onMoveNext} disabled={!hasNext}>
-        Next
+        {t('next')}
         <MoveRight />
       </Button>
     </div>
@@ -227,6 +230,7 @@ export default function LocaleEditor() {
   const { localeName } = useParams<{ localeName: string }>()
   const { setCurrentLocale } = useLocalizationStore()
   const { root } = useFileTreeStore()
+  const { t } = useTranslation('localeEditor', { keyPrefix: 'filter' })
 
   useEffect(() => {
     if (localeName) setCurrentLocale(localeName)
@@ -261,15 +265,15 @@ export default function LocaleEditor() {
             value={filter}
             onValueChange={(v) => v && setFilter(v as FilterType)}
           >
-            <ToggleGroupItem value="all">Все ключи</ToggleGroupItem>
-            <ToggleGroupItem value="empty">Не заполненные</ToggleGroupItem>
-            <ToggleGroupItem value="orphan">Сироты</ToggleGroupItem>
+            <ToggleGroupItem value="all">{t('all')}</ToggleGroupItem>
+            <ToggleGroupItem value="empty">{t('empty')}</ToggleGroupItem>
+            <ToggleGroupItem value="orphan">{t('orphan')}</ToggleGroupItem>
           </ToggleGroup>
         </div>
         <div className="flex-1 overflow-y-auto flex flex-col gap-6">
           {!hasAnyVisible ? (
             <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">
-              Ключи не найдены
+              {t('noKeys')}
             </div>
           ) : (
             orderedContent.map(({ namespace, content }) => (

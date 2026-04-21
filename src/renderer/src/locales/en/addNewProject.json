@@ -3,9 +3,10 @@
   "name": "Name",
   "color": "Color",
   "projectPath": "Project Path",
+  "selectPath": "Select Path",
   "errors": {
     "path_existed": "Project with this path is already added",
-    "name_existed": "Project with this name is arleady added",
+    "name_existed": "Project with this name is already added",
     "folder_not_found": "Project folder not found",
     "found_invalid_files": "Found invalid files in project",
     "error_checking": "Error while checking project structure"

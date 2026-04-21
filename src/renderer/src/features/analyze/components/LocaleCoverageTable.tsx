@@ -9,6 +9,7 @@ import {
   TableRow
 } from '@renderer/components/ui/table'
 import { LocaleCoverage } from 'src/domain/models/analytics'
+import { useTranslation } from 'react-i18next'
 
 type Props = {
   rows: LocaleCoverage[]
@@ -16,20 +17,21 @@ type Props = {
 }
 
 export default function LocaleCoverageTable({ rows, sourceLocale }: Props) {
+  const { t } = useTranslation('analyze', { keyPrefix: 'table' })
   if (rows.length === 0) return null
 
   return (
     <section className="flex flex-col gap-2">
-      <h3 className="text-sm font-medium text-gray-200">Locale coverage</h3>
+      <h3 className="text-sm font-medium text-gray-200">{t('title')}</h3>
       <div className="rounded-md border border-gray-700 overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[15%]">Locale</TableHead>
-              <TableHead className="w-[15%] text-right">Present</TableHead>
-              <TableHead className="w-[15%] text-right">Missing</TableHead>
-              <TableHead className="w-[15%] text-right">Empty</TableHead>
-              <TableHead>Coverage</TableHead>
+              <TableHead className="w-[15%]">{t('locale')}</TableHead>
+              <TableHead className="w-[15%] text-right">{t('present')}</TableHead>
+              <TableHead className="w-[15%] text-right">{t('missing')}</TableHead>
+              <TableHead className="w-[15%] text-right">{t('empty')}</TableHead>
+              <TableHead>{t('coverage')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -41,7 +43,7 @@ export default function LocaleCoverageTable({ rows, sourceLocale }: Props) {
                     <span className="font-medium">{r.locale}</span>
                     {sourceLocale === r.locale && (
                       <span className="text-[10px] uppercase text-cyan-400 font-semibold">
-                        source
+                        {t('source')}
                       </span>
                     )}
                   </div>

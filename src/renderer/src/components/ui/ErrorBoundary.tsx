@@ -1,4 +1,5 @@
 import { Component, ReactNode } from 'react'
+import i18next from 'i18next'
 
 type Props = {
   children: ReactNode
@@ -25,12 +26,12 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         this.props.fallback ?? (
           <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-            <p className="text-red-500">Something went wrong</p>
+            <p className="text-red-500">{i18next.t('common:error')}</p>
             <button
               onClick={() => window.location.reload()}
               className="px-4 py-2 bg-gray-800 text-white rounded"
             >
-              Reload
+              {i18next.t('common:reload')}
             </button>
           </div>
         )

@@ -1,0 +1,78 @@
+{
+  "title": "Project Analyze",
+  "sourceLocale": "Source locale:",
+  "notSet": "Not set",
+  "none": "None",
+  "refresh": "Refresh",
+  "analyzing": "Analyzing project…",
+  "noProjectData": "No project data",
+  "noProjectDataDesc": "Open a project or create locales to see analytics.",
+  "singleLocaleWarning": "Only one locale detected — orphan file / key detection is unavailable.",
+  "table": {
+    "title": "Locale coverage",
+    "locale": "Locale",
+    "present": "Present",
+    "missing": "Missing",
+    "empty": "Empty",
+    "coverage": "Coverage",
+    "source": "source"
+  },
+  "stats": {
+    "locales": "Locales",
+    "namespaces": "Namespaces",
+    "uniqueKeys": "Unique keys",
+    "totalInstances": "{{count}} total instances",
+    "orphanFiles": "Orphan files",
+    "orphanKeys": "Orphan keys",
+    "emptyValues": "Empty values",
+    "duplicateGroups": "Duplicate groups",
+    "untranslated": "Untranslated"
+  },
+  "section": {
+    "searchPlaceholder": "Filter by namespace / key…",
+    "emptyDefault": "Nothing found.",
+    "allLocales": "All locales",
+    "showing": "showing {{shown}} of {{total}}",
+    "open": "Open"
+  },
+  "orphanKeys": {
+    "title": "Orphan keys",
+    "empty": "Every key exists in every locale.",
+    "fixAll": "Fix all",
+    "fix": "Fix (add to missing locales)",
+    "delete": "Delete from all locales",
+    "fixTitle": "Fix all orphan keys",
+    "fixDescription": "This will add <b>{{count}}</b> missing keys (with empty values) across all locales.",
+    "deleteTitle": "Delete key",
+    "deleteDescription": "Delete <k>{{key}}</k> from <ns>{{namespace}}</ns> in all locales? This cannot be undone.",
+    "confirmDelete": "Delete"
+  },
+  "orphanFiles": {
+    "title": "Orphan files",
+    "empty": "All files exist in every locale.",
+    "fixAll": "Fix all",
+    "fix": "Fix (add missing files)",
+    "delete": "Delete from all locales",
+    "fixTitle": "Fix all orphan files",
+    "fixDescription": "This will create missing files for <b>{{count}}</b> namespaces in every locale that lacks them. Keys will be copied with empty values.",
+    "deleteTitle": "Delete namespace",
+    "deleteDescription": "Delete <ns>{{namespace}}</ns> from all locales? This cannot be undone.",
+    "confirmDelete": "Delete"
+  },
+  "emptyValues": {
+    "title": "Empty values",
+    "empty": "No empty values found.",
+    "subtitle": "empty in {{count}} locale(s)"
+  },
+  "duplicates": {
+    "title": "Duplicate values",
+    "empty": "No duplicated values found.",
+    "occurrences": "{{count}} occurrences"
+  },
+  "untranslated": {
+    "title": "Untranslated keys",
+    "titleWithSource": "Untranslated keys (source: {{locale}})",
+    "empty": "All keys are translated.",
+    "noSource": "Select a source locale in the header to detect untranslated keys."
+  }
+}

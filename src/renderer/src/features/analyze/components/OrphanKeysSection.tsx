@@ -9,6 +9,7 @@ import { ConfirmDialog } from './ConfirmDialog'
 import { ProblemRow } from './ProblemRow'
 import { ProblemSection, SectionRowList } from './ProblemSection'
 import { useSectionState } from '../hooks/useSectionState'
+import { Trans, useTranslation } from 'react-i18next'
 
 type Props = {
   items: OrphanKeyEntry[]
@@ -21,6 +22,7 @@ export default function OrphanKeysSection({ items, locales }: Props) {
   const [busy, setBusy] = useState(false)
   const [bulkConfirm, setBulkConfirm] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<OrphanKeyEntry | null>(null)
+  const { t } = useTranslation('analyze', { keyPrefix: 'orphanKeys' })
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -77,7 +79,7 @@ export default function OrphanKeysSection({ items, locales }: Props) {
   return (
     <>
       <ProblemSection
-        title="Orphan keys"
+        title={t('title')}
         icon={Layers}
         tone="orange"
         count={filtered.length}
@@ -87,11 +89,11 @@ export default function OrphanKeysSection({ items, locales }: Props) {
         locales={locales}
         localeFilter={localeFilter}
         onLocaleFilterChange={setLocaleFilter}
-        emptyText="Every key exists in every locale."
+        emptyText={t('empty')}
         actions={
           items.length > 0 ? (
             <Button size="sm" onClick={() => setBulkConfirm(true)} disabled={busy}>
-              <Wrench /> Fix all
+              <Wrench /> {t('fixAll')}
             </Button>
           ) : null
         }
@@ -117,7 +119,7 @@ export default function OrphanKeysSection({ items, locales }: Props) {
                         <Wrench className="size-4" />
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent side="top">Fix (add to missing locales)</TooltipContent>
+                    <TooltipContent side="top">{t('fix')}</TooltipContent>
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -129,7 +131,7 @@ export default function OrphanKeysSection({ items, locales }: Props) {
                         <Trash className="size-4" />
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent side="top">Delete from all locales</TooltipContent>
+                    <TooltipContent side="top">{t('delete')}</TooltipContent>
                   </Tooltip>
                 </>
               }
@@ -140,30 +142,37 @@ export default function OrphanKeysSection({ items, locales }: Props) {
 
       <ConfirmDialog
         open={bulkConfirm}
-        title="Fix all orphan keys"
+        title={t('fixTitle')}
         description={
-          <>
-            This will add <b>{items.length}</b> missing keys (with empty values) across all locales.
-          </>
+          <Trans
+            i18nKey="orphanKeys.fixDescription"
+            ns="analyze"
+            values={{ count: items.length }}
+            components={{ b: <b /> }}
+          />
         }
-        confirmLabel="Fix all"
+        confirmLabel={t('fixAll')}
         onConfirm={fixAll}
         onCancel={() => setBulkConfirm(false)}
       />
 
       <ConfirmDialog
         open={deleteTarget !== null}
-        title="Delete key"
+        title={t('deleteTitle')}
         description={
           deleteTarget && (
-            <>
-              Delete <span className="font-mono">{deleteTarget.key}</span> from{' '}
-              <span className="font-mono">{deleteTarget.namespace}</span> in all locales? This
-              cannot be undone.
-            </>
+            <Trans
+              i18nKey="orphanKeys.deleteDescription"
+              ns="analyze"
+              values={{ key: deleteTarget.key, namespace: deleteTarget.namespace }}
+              components={{
+                k: <span className="font-mono" />,
+                ns: <span className="font-mono" />
+              }}
+            />
           )
         }
-        confirmLabel="Delete"
+        confirmLabel={t('confirmDelete')}
         destructive
         onConfirm={() => deleteTarget && deleteOne(deleteTarget)}
         onCancel={() => setDeleteTarget(null)}

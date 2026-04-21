@@ -6,6 +6,7 @@ import { UntranslatedEntry } from 'src/domain/models/analytics'
 import { ProblemRow } from './ProblemRow'
 import { ProblemSection, SectionRowList } from './ProblemSection'
 import { useSectionState } from '../hooks/useSectionState'
+import { useTranslation } from 'react-i18next'
 
 type Props = {
   items: UntranslatedEntry[]
@@ -16,6 +17,7 @@ type Props = {
 export default function UntranslatedSection({ items, locales, sourceLocale }: Props) {
   const { search, setSearch, localeFilter, setLocaleFilter } = useSectionState()
   const navigate = useNavigate()
+  const { t } = useTranslation('analyze', { keyPrefix: 'untranslated' })
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -32,7 +34,7 @@ export default function UntranslatedSection({ items, locales, sourceLocale }: Pr
   if (!sourceLocale) {
     return (
       <ProblemSection
-        title="Untranslated keys"
+        title={t('title')}
         icon={Languages}
         tone="red"
         count={0}
@@ -42,7 +44,7 @@ export default function UntranslatedSection({ items, locales, sourceLocale }: Pr
         locales={locales}
         localeFilter={localeFilter}
         onLocaleFilterChange={setLocaleFilter}
-        emptyText="Select a source locale in the header to detect untranslated keys."
+        emptyText={t('noSource')}
       >
         <div />
       </ProblemSection>
@@ -51,7 +53,7 @@ export default function UntranslatedSection({ items, locales, sourceLocale }: Pr
 
   return (
     <ProblemSection
-      title={`Untranslated keys (source: ${sourceLocale})`}
+      title={t('titleWithSource', { locale: sourceLocale })}
       icon={Languages}
       tone="red"
       count={filtered.length}
@@ -61,7 +63,7 @@ export default function UntranslatedSection({ items, locales, sourceLocale }: Pr
       locales={locales.filter((l) => l !== sourceLocale)}
       localeFilter={localeFilter}
       onLocaleFilterChange={setLocaleFilter}
-      emptyText="All keys are translated."
+      emptyText={t('empty')}
     >
       <SectionRowList>
         {filtered.map((u) => (

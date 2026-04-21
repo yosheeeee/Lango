@@ -9,6 +9,7 @@ import { ConfirmDialog } from './ConfirmDialog'
 import { ProblemRow } from './ProblemRow'
 import { ProblemSection, SectionRowList } from './ProblemSection'
 import { useSectionState } from '../hooks/useSectionState'
+import { Trans, useTranslation } from 'react-i18next'
 
 type Props = {
   items: OrphanFileEntry[]
@@ -21,6 +22,7 @@ export default function OrphanFilesSection({ items, locales }: Props) {
   const [busy, setBusy] = useState(false)
   const [bulkConfirm, setBulkConfirm] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const { t } = useTranslation('analyze', { keyPrefix: 'orphanFiles' })
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -71,7 +73,7 @@ export default function OrphanFilesSection({ items, locales }: Props) {
   return (
     <>
       <ProblemSection
-        title="Orphan files"
+        title={t('title')}
         icon={FileWarning}
         tone="orange"
         count={filtered.length}
@@ -81,11 +83,11 @@ export default function OrphanFilesSection({ items, locales }: Props) {
         locales={locales}
         localeFilter={localeFilter}
         onLocaleFilterChange={setLocaleFilter}
-        emptyText="All files exist in every locale."
+        emptyText={t('empty')}
         actions={
           items.length > 0 ? (
             <Button size="sm" onClick={() => setBulkConfirm(true)} disabled={busy}>
-              <Wrench /> Fix all
+              <Wrench /> {t('fixAll')}
             </Button>
           ) : null
         }
@@ -110,7 +112,7 @@ export default function OrphanFilesSection({ items, locales }: Props) {
                         <Wrench className="size-4" />
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent side="top">Fix (add missing files)</TooltipContent>
+                    <TooltipContent side="top">{t('fix')}</TooltipContent>
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -122,7 +124,7 @@ export default function OrphanFilesSection({ items, locales }: Props) {
                         <Trash className="size-4" />
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent side="top">Delete from all locales</TooltipContent>
+                    <TooltipContent side="top">{t('delete')}</TooltipContent>
                   </Tooltip>
                 </>
               }
@@ -133,28 +135,32 @@ export default function OrphanFilesSection({ items, locales }: Props) {
 
       <ConfirmDialog
         open={bulkConfirm}
-        title="Fix all orphan files"
+        title={t('fixTitle')}
         description={
-          <>
-            This will create missing files for <b>{items.length}</b> namespaces in every locale that
-            lacks them. Keys will be copied with empty values.
-          </>
+          <Trans
+            i18nKey="orphanFiles.fixDescription"
+            ns="analyze"
+            values={{ count: items.length }}
+            components={{ b: <b /> }}
+          />
         }
-        confirmLabel="Fix all"
+        confirmLabel={t('fixAll')}
         onConfirm={fixAll}
         onCancel={() => setBulkConfirm(false)}
       />
 
       <ConfirmDialog
         open={deleteTarget !== null}
-        title="Delete namespace"
+        title={t('deleteTitle')}
         description={
-          <>
-            Delete <span className="font-mono">{deleteTarget}</span> from all locales? This cannot
-            be undone.
-          </>
+          <Trans
+            i18nKey="orphanFiles.deleteDescription"
+            ns="analyze"
+            values={{ namespace: deleteTarget ?? '' }}
+            components={{ ns: <span className="font-mono" /> }}
+          />
         }
-        confirmLabel="Delete"
+        confirmLabel={t('confirmDelete')}
         destructive
         onConfirm={() => deleteTarget && deleteOne(deleteTarget)}
         onCancel={() => setDeleteTarget(null)}

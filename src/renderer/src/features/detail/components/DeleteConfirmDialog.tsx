@@ -7,6 +7,7 @@ import {
   DialogTitle
 } from '@renderer/components/ui/dialog'
 import { Button } from '@renderer/components/ui/button'
+import { Trans, useTranslation } from 'react-i18next'
 
 export type DeleteConfirmDialogProps = {
   open: boolean
@@ -21,21 +22,26 @@ export function DeleteConfirmDialog({
   onConfirm,
   onCancel
 }: DeleteConfirmDialogProps) {
+  const { t } = useTranslation('editor', { keyPrefix: 'deleteKey' })
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onCancel()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete key</DialogTitle>
+          <DialogTitle>{t('title')}</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete{' '}
-            <span className="text-white font-mono">{translationKey}</span>? This will remove the key
-            from all locales and cannot be undone.
+            <Trans
+              i18nKey="deleteKey.description"
+              ns="editor"
+              values={{ key: translationKey }}
+              components={{ k: <span className="text-white font-mono" /> }}
+            />
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button onClick={onCancel}>Cancel</Button>
+          <Button onClick={onCancel}>{t('cancel')}</Button>
           <Button onClick={onConfirm} className="bg-red-700 hover:bg-red-600 text-white">
-            Delete
+            {t('confirm')}
           </Button>
         </DialogFooter>
       </DialogContent>

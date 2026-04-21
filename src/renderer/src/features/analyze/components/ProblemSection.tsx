@@ -14,6 +14,7 @@ import {
 import { cn } from '@renderer/utils/cn'
 import { ChevronDown, Filter, LucideIcon, Search } from 'lucide-react'
 import { ComponentProps, FC, ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 
 type ProblemSectionProps = {
   title: string
@@ -46,7 +47,7 @@ export const ProblemSection: FC<ProblemSectionProps> = ({
   tone = 'orange',
   count,
   totalCount,
-  searchPlaceholder = 'Filter by namespace / key…',
+  searchPlaceholder,
   searchValue,
   onSearchChange,
   locales,
@@ -55,9 +56,12 @@ export const ProblemSection: FC<ProblemSectionProps> = ({
   actions,
   children,
   defaultOpen = false,
-  emptyText = 'Nothing found.'
+  emptyText
 }) => {
+  const { t } = useTranslation('analyze', { keyPrefix: 'section' })
   const isEmpty = totalCount === 0
+  const placeholder = searchPlaceholder ?? t('searchPlaceholder')
+  const emptyLabel = emptyText ?? t('emptyDefault')
 
   return (
     <Collapsible
@@ -83,7 +87,7 @@ export const ProblemSection: FC<ProblemSectionProps> = ({
             </span>
             {count !== totalCount && (
               <span className="text-[11px] text-gray-500">
-                showing {count} of {totalCount}
+                {t('showing', { shown: count, total: totalCount })}
               </span>
             )}
           </div>
@@ -97,7 +101,7 @@ export const ProblemSection: FC<ProblemSectionProps> = ({
 
       <CollapsibleContent className="border-t border-t-gray-700">
         {isEmpty ? (
-          <div className="p-6 text-center text-sm text-gray-500">{emptyText}</div>
+          <div className="p-6 text-center text-sm text-gray-500">{emptyLabel}</div>
         ) : (
           <>
             <div className="flex items-center gap-2 px-3 py-2 border-b border-b-gray-800">
@@ -106,7 +110,7 @@ export const ProblemSection: FC<ProblemSectionProps> = ({
                 <Input
                   value={searchValue}
                   onChange={(e) => onSearchChange(e.target.value)}
-                  placeholder={searchPlaceholder}
+                  placeholder={placeholder}
                   className="pl-7 h-8 text-xs"
                 />
               </div>
@@ -120,14 +124,14 @@ export const ProblemSection: FC<ProblemSectionProps> = ({
                         <span>{localeFilter}</span>
                       </>
                     ) : (
-                      <span>All locales</span>
+                      <span>{t('allLocales')}</span>
                     )}
                     <ChevronDown className="size-3.5" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => onLocaleFilterChange(null)}>
-                    All locales
+                    {t('allLocales')}
                   </DropdownMenuItem>
                   {locales.map((l) => (
                     <DropdownMenuItem

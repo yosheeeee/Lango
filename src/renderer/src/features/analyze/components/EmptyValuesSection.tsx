@@ -6,6 +6,7 @@ import { EmptyValueEntry } from 'src/domain/models/analytics'
 import { ProblemRow } from './ProblemRow'
 import { ProblemSection, SectionRowList } from './ProblemSection'
 import { useSectionState } from '../hooks/useSectionState'
+import { useTranslation } from 'react-i18next'
 
 type Props = {
   items: EmptyValueEntry[]
@@ -15,6 +16,7 @@ type Props = {
 export default function EmptyValuesSection({ items, locales }: Props) {
   const { search, setSearch, localeFilter, setLocaleFilter } = useSectionState()
   const navigate = useNavigate()
+  const { t } = useTranslation('analyze', { keyPrefix: 'emptyValues' })
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -30,7 +32,7 @@ export default function EmptyValuesSection({ items, locales }: Props) {
 
   return (
     <ProblemSection
-      title="Empty values"
+      title={t('title')}
       icon={Hash}
       tone="amber"
       count={filtered.length}
@@ -40,7 +42,7 @@ export default function EmptyValuesSection({ items, locales }: Props) {
       locales={locales}
       localeFilter={localeFilter}
       onLocaleFilterChange={setLocaleFilter}
-      emptyText="No empty values found."
+      emptyText={t('empty')}
     >
       <SectionRowList>
         {filtered.map((e) => (
@@ -50,7 +52,7 @@ export default function EmptyValuesSection({ items, locales }: Props) {
             keyPath={e.key}
             highlightedLocales={e.emptyLocales}
             highlightTone="amber"
-            subtitle={<>empty in {e.emptyLocales.length} locale(s)</>}
+            subtitle={<>{t('subtitle', { count: e.emptyLocales.length })}</>}
             onNavigate={() =>
               navigate(`${routerPaths.editor}/${e.namespace}?key=${encodeURIComponent(e.key)}`)
             }

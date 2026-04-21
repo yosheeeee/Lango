@@ -2,6 +2,7 @@ import { cn } from '@renderer/utils/cn'
 import { Folder } from 'lucide-react'
 import { FC } from 'react'
 import { Button } from '@renderer/components/ui/button'
+import { useTranslation } from 'react-i18next'
 
 interface PathInputProps {
   value: string
@@ -10,6 +11,7 @@ interface PathInputProps {
 }
 
 export const PathInput: FC<PathInputProps> = ({ className, value, onChange }) => {
+  const { t } = useTranslation('addNewProject')
   async function onButtonClick(): Promise<void> {
     const path = await window.api.session.openSelectFolderDialog()
     if (path) {
@@ -27,7 +29,7 @@ export const PathInput: FC<PathInputProps> = ({ className, value, onChange }) =>
       )}
     >
       <p className="truncate" style={{ direction: 'rtl' }}>
-        {value ? value : <span>Select Path</span>}
+        {value ? value : <span>{t('selectPath')}</span>}
       </p>
       <Button
         size={'unset'}

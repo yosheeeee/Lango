@@ -6,5 +6,7 @@
   "deleteLocale": {
     "title": "Delete localization",
     "description": "Are you sure you want to delete \"{{name}}\"? All files inside will be removed."
-  }
+  },
+  "noProject": "No project selected",
+  "loading": "Loading..."
 }

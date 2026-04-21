@@ -4,6 +4,11 @@
     "title": "Select a file to edit",
     "description": "Choose a JSON file from the tree on the left"
   },
+  "projectTree": {
+    "noProject": "No project selected",
+    "loading": "Loading...",
+    "noFolders": "No localization folders found"
+  },
   "fileTree": {
     "newFile": "New file",
     "newFolder": "New folder",
@@ -18,5 +23,23 @@
       "description": "Are you sure you want to delete «{{name}}»? All files inside will be removed from all locales."
     },
     "fixOrphan": "Add file to all localizations"
+  },
+  "deleteKey": {
+    "title": "Delete key",
+    "description": "Are you sure you want to delete <k>{{key}}</k>? This will remove the key from all locales and cannot be undone.",
+    "cancel": "Cancel",
+    "confirm": "Delete"
+  },
+  "keyActions": {
+    "edit": "Edit key",
+    "delete": "Delete key",
+    "fixOrphan": "Fix orphan key"
+  },
+  "addKey": {
+    "button": "Add Key",
+    "translation": "Translation Key",
+    "parent": "Parent Key",
+    "translationName": "New translation key name:",
+    "parentName": "New parent key name:"
   }
 }
