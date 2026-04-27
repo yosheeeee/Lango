@@ -55,7 +55,7 @@ export default function KeybindsCheetSheet() {
             t={t}
             i18nKey="escToClose"
             components={[
-              <kbd className="px-1.5 py-0.5 text-xs font-mono bg-background border rounded" />
+              <kbd key="esc" className="px-1.5 py-0.5 text-xs font-mono bg-background border rounded" />
             ]}
           />
         </div>
