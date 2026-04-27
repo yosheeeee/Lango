@@ -15,5 +15,6 @@
     "focus": "Focus project tree",
     "newItem": "Create file or folder",
     "deleteItem": "Delete focused item"
-  }
+  },
+  "escToClose": "Press <1>Esc</1> to close"
 }
