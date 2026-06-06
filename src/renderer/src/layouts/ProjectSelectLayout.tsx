@@ -1,3 +1,4 @@
+import { TitleBar } from '@renderer/components/ui/TitleBar'
 import { ProjectsProvider } from '@renderer/stores/providers/ProjectsProvider'
 import { routerPaths } from '@renderer/router/routerPaths'
 import { useSessionStore } from '@renderer/stores/sessionStore'
@@ -17,6 +18,7 @@ export const ProjectSelectLayout: FC<ComponentProps<'section'>> = ({ className, 
 
   return (
     <ProjectsProvider>
+      <TitleBar />
       <section
         className={cn('flex flex-col  gap-5 h-full w-full justify-around', className)}
         {...props}

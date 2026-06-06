@@ -1,7 +1,7 @@
-import { app, shell, BrowserWindow } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, nativeImage } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
+import iconPath from '../../resources/icon.png?asset'
 import '../controllers'
 
 function createWindow(): void {
@@ -11,7 +11,10 @@ function createWindow(): void {
     height: 670,
     show: false,
     autoHideMenuBar: true,
-    ...(process.platform === 'linux' ? { icon } : {}),
+    ...(process.platform === 'darwin'
+      ? { titleBarStyle: 'hidden' }
+      : { frame: false }),
+    icon: iconPath,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -47,12 +50,37 @@ function createWindow(): void {
   }
 }
 
+ipcMain.on('window:minimize', (event) => {
+  BrowserWindow.fromWebContents(event.sender)?.minimize()
+})
+
+ipcMain.on('window:maximize', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (win?.isMaximized()) {
+    win.unmaximize()
+  } else {
+    win?.maximize()
+  }
+})
+
+ipcMain.on('window:close', (event) => {
+  BrowserWindow.fromWebContents(event.sender)?.close()
+})
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
+  // Set app name (shows in menu bar, dock, etc.)
+  app.setName('Lango')
+
+  // Set custom dock icon on macOS
+  if (process.platform === 'darwin') {
+    app.dock?.setIcon(nativeImage.createFromPath(iconPath))
+  }
+
   // Set app user model id for windows
-  electronApp.setAppUserModelId('com.electron')
+  electronApp.setAppUserModelId('com.lango.app')
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.

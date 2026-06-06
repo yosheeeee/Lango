@@ -1,4 +1,4 @@
-appId: com.electron.app
+appId: com.lango.app
 productName: lango
 directories:
   buildResources: build
@@ -32,7 +32,7 @@ linux:
   target:
     - AppImage
     - deb
-  maintainer: electronjs.org
+  maintainer: lango
   category: Utility
 appImage:
   artifactName: ${name}-${version}.${ext}

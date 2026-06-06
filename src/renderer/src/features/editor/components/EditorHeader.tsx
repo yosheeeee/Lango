@@ -8,7 +8,10 @@ import SessionSwitcher from './SessionSwitcher'
 
 export const EditorHeader: FC<ComponentProps<'header'>> = () => {
   return (
-    <header className="flex items-center justify-between py-1 px-3 border-b-gray-700 border-b select-none">
+    <header
+      className="flex items-center justify-between py-1 px-3 border-b-gray-700 border-b select-none"
+      style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+    >
       <HeaderGroup>
         <HeaderMenu />
         <SessionSwitcher />
@@ -28,5 +31,9 @@ export const EditorHeader: FC<ComponentProps<'header'>> = () => {
 }
 
 const HeaderGroup: FC<ComponentProps<'div'>> = ({ className, ...props }) => (
-  <div {...props} className={cn('flex items-center gap-3', className)} />
+  <div
+    {...props}
+    className={cn('flex items-center gap-3', className)}
+    style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+  />
 )

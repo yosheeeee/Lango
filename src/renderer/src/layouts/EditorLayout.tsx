@@ -1,3 +1,4 @@
+import { TitleBar } from '@renderer/components/ui/TitleBar'
 import { TooltipProvider } from '@renderer/components/ui/tooltip'
 import KeybindsProvider from '@renderer/providers/KeybindsProvider'
 import { routerPaths } from '@renderer/router/routerPaths'
@@ -17,6 +18,7 @@ export const EditorLayout: FC<PropsWithChildren> = ({ children }) => {
 
   return (
     <section className="flex flex-col w-full h-full">
+      <TitleBar />
       <TooltipProvider>
         <KeybindsProvider>{children}</KeybindsProvider>
       </TooltipProvider>
