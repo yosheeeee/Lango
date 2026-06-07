@@ -105,7 +105,7 @@ export default function OrphanFilesSection({ items, locales }: Props) {
               namespace={f.namespace}
               presentLocales={f.presentLocales}
               missingLocales={f.missingLocales}
-              onNavigate={() => navigate(`${routerPaths.editor}/${f.namespace}`)}
+              onNavigate={() => navigate(`${routerPaths.editor}/ns/${f.namespace}`)}
               rightActions={
                 <>
                   <Tooltip>

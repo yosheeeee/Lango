@@ -130,16 +130,18 @@ export const ProjectSearch: FC = () => {
 
     switch (item.type) {
       case 'namespace':
-        navigate(`${routerPaths.editor}/${item.path}`)
+        navigate(`${routerPaths.editor}/ns/${item.path}`)
         break
-      case 'key': {
-        const [ns] = item.path.split('.')
-        navigate(`${routerPaths.editor}/${ns}`)
-        break
-      }
+      case 'key':
       case 'value': {
-        const [ns] = item.path.split('.')
-        navigate(`${routerPaths.editor}/${ns}`)
+        const dotIdx = item.path.indexOf('.')
+        const ns = dotIdx === -1 ? item.path : item.path.slice(0, dotIdx)
+        const key = dotIdx === -1 ? '' : item.path.slice(dotIdx + 1)
+        if (!key) {
+          navigate(`${routerPaths.editor}/ns/${ns}`)
+        } else {
+          navigate(`${routerPaths.editor}/ns/${ns}?key=${encodeURIComponent(key)}`)
+        }
         break
       }
       case 'locale':

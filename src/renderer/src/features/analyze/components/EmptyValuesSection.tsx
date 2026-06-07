@@ -54,7 +54,7 @@ export default function EmptyValuesSection({ items, locales }: Props) {
             highlightTone="amber"
             subtitle={<>{t('subtitle', { count: e.emptyLocales.length })}</>}
             onNavigate={() =>
-              navigate(`${routerPaths.editor}/${e.namespace}?key=${encodeURIComponent(e.key)}`)
+              navigate(`${routerPaths.editor}/ns/${e.namespace}?key=${encodeURIComponent(e.key)}`)
             }
           />
         ))}

@@ -71,7 +71,7 @@ export default function DuplicatesSection({ items, locales }: Props) {
                   keyPath={o.key}
                   onNavigate={() =>
                     navigate(
-                      `${routerPaths.editor}/${o.namespace}?key=${encodeURIComponent(o.key)}`
+                      `${routerPaths.editor}/ns/${o.namespace}?key=${encodeURIComponent(o.key)}`
                     )
                   }
                 />

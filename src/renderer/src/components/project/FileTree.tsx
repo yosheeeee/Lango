@@ -251,7 +251,7 @@ export function FileTreeItem({
         data-orphan={isOrphan || undefined}
       >
         <NavLink
-          to={[routerPaths.editor, link].join('')}
+          to={`${routerPaths.editor}/ns${link}`}
           className={`gap-1 justify-between group hover:underline ${isActive ? 'bg-gray-700 hover:bg-gray-600!' : ''}`}
         >
           <div className="flex items-center gap-1">

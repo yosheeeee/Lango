@@ -73,7 +73,7 @@ export default function OrphanKeysSection({ items, locales }: Props) {
   }
 
   function openInEditor(e: OrphanKeyEntry) {
-    navigate(`${routerPaths.editor}/${e.namespace}?key=${encodeURIComponent(e.key)}`)
+    navigate(`${routerPaths.editor}/ns/${e.namespace}?key=${encodeURIComponent(e.key)}`)
   }
 
   return (

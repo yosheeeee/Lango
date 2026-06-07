@@ -75,7 +75,7 @@ export default function UntranslatedSection({ items, locales, sourceLocale }: Pr
             highlightTone="red"
             subtitle={<span className="font-mono truncate">= &quot;{u.value}&quot;</span>}
             onNavigate={() =>
-              navigate(`${routerPaths.editor}/${u.namespace}?key=${encodeURIComponent(u.key)}`)
+              navigate(`${routerPaths.editor}/ns/${u.namespace}?key=${encodeURIComponent(u.key)}`)
             }
           />
         ))}

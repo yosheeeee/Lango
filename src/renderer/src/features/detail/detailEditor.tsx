@@ -227,14 +227,14 @@ function useNamespaceNavigation() {
   const onMoveNext = useCallback(() => {
     if (currentIndex >= 0 && currentIndex < namespaces.length - 1) {
       const nextLink = namespaces[currentIndex + 1]
-      navigate([routerPaths.editor, nextLink].join(''), { replace: true })
+      navigate(`${routerPaths.editor}/ns${nextLink}`, { replace: true })
     }
   }, [currentIndex, namespaces, navigate])
 
   const onMovePrev = useCallback(() => {
     if (currentIndex > 0) {
       const prevLink = namespaces[currentIndex - 1]
-      navigate([routerPaths.editor, prevLink].join(''), { replace: true })
+      navigate(`${routerPaths.editor}/ns${prevLink}`, { replace: true })
     }
   }, [currentIndex, namespaces, navigate])
 
