@@ -311,14 +311,14 @@ export class ProjectService {
         try {
           const content = fs.readFileSync(filePath, 'utf-8')
           sourceJson = JSON.parse(content)
-          sourceLocale = locale
-          break
         } catch {
-          // ignore
+          sourceJson = {}
         }
+        sourceLocale = locale
+        break
       }
     }
-    if (!sourceLocale) throw new Error(`No existing file found for namespace "${namespacePath}"`)
+    if (!sourceLocale) return
 
     // Очищаем значения, сохраняя структуру
     const emptiedJson = this.emptyValues(sourceJson)
@@ -421,7 +421,9 @@ export class ProjectService {
       throw new Error(`Locale "${localeName}" already exists`)
     }
     if (existingLocales.length === 0) {
-      throw new Error('No existing locales to copy structure from')
+      // Первая локаль — просто создаём пустую папку
+      fs.mkdirSync(path.join(this.projectPath, localeName), { recursive: true })
+      return
     }
 
     // Получаем дерево ДО создания папки, чтобы не считать все файлы сиротами

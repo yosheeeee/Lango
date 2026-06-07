@@ -43,6 +43,8 @@ export default function OrphanFilesSection({ items, locales }: Props) {
     setBusy(true)
     try {
       await window.api.project.fixOrphanNamespace(namespace)
+    } catch {
+      // skip
     } finally {
       setBusy(false)
     }
@@ -63,7 +65,11 @@ export default function OrphanFilesSection({ items, locales }: Props) {
     setBusy(true)
     try {
       for (const f of items) {
-        await window.api.project.fixOrphanNamespace(f.namespace)
+        try {
+          await window.api.project.fixOrphanNamespace(f.namespace)
+        } catch {
+          // skip — namespace may have been deleted since analysis
+        }
       }
     } finally {
       setBusy(false)

@@ -16,9 +16,15 @@ import { useTranslation } from 'react-i18next'
 export default function SessionSwitcher() {
   const { currentSession, sessions, setSession, setSessions } = useSessionStore()
   const { t } = useTranslation('projectSelect')
+
+  const selectSession = async (s: Session) => {
+    await window.api.session.setCurrentSession(s.id)
+    setSession(s)
+  }
+
   const onAdded = (s: Session) => {
     setSessions((prev) => [s, ...prev])
-    setSession(s)
+    selectSession(s)
   }
   return (
     <>
@@ -39,7 +45,7 @@ export default function SessionSwitcher() {
           {sessions?.map((s) => (
             <DropdownMenuItem
               key={s.id}
-              onClick={() => setSession(s)}
+              onClick={() => selectSession(s)}
               className={
                 (cn(projectColors[s.color].base, projectColors[s.color].hover), 'cursor-pointer')
               }

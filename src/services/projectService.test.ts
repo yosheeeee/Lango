@@ -206,10 +206,10 @@ describe('ProjectService', () => {
       expect(() => projectService.createLocale('en')).toThrow('Locale "en" already exists')
     })
 
-    it('должен выбросить ошибку если нет локалей для копирования', async () => {
-      expect(() => projectService.createLocale('fr')).toThrow(
-        'No existing locales to copy structure from'
-      )
+    it('должен создать пустую папку локали если нет исходных локалей', async () => {
+      projectService.createLocale('fr')
+      expect(fs.existsSync(path.join(testDir, 'fr'))).toBe(true)
+      expect(fs.readdirSync(path.join(testDir, 'fr'))).toEqual([])
     })
 
     it('должен очистить значения с вложенной структурой', async () => {
@@ -290,12 +290,38 @@ describe('ProjectService', () => {
       expect(ruLogin).toEqual({ title: '' })
     })
 
-    it('должен выбросить ошибку если файл нигде не существует', async () => {
+    it('не должен выбрасывать ошибку если файл нигде не существует', async () => {
       fs.mkdirSync(path.join(testDir, 'en'), { recursive: true })
 
-      expect(() => projectService.fixOrphanNamespace('nonexistent')).toThrow(
-        'No existing file found for namespace "nonexistent"'
-      )
+      expect(() => projectService.fixOrphanNamespace('nonexistent')).not.toThrow()
+    })
+
+    it('должен обработать пустой файл (0 байт) как источник', async () => {
+      const enDir = path.join(testDir, 'en')
+      const ruDir = path.join(testDir, 'ru')
+      fs.mkdirSync(enDir, { recursive: true })
+      fs.mkdirSync(ruDir, { recursive: true })
+      fs.writeFileSync(path.join(ruDir, 'empty.json'), '', 'utf-8')
+      // В en нет empty.json
+
+      projectService.fixOrphanNamespace('empty')
+
+      const enContent = fs.readFileSync(path.join(enDir, 'empty.json'), 'utf-8')
+      expect(JSON.parse(enContent)).toEqual({})
+    })
+
+    it('должен обработать битый JSON как источник', async () => {
+      const enDir = path.join(testDir, 'en')
+      const ruDir = path.join(testDir, 'ru')
+      fs.mkdirSync(enDir, { recursive: true })
+      fs.mkdirSync(ruDir, { recursive: true })
+      fs.writeFileSync(path.join(ruDir, 'broken.json'), '{invalid}', 'utf-8')
+      // В en нет broken.json
+
+      projectService.fixOrphanNamespace('broken')
+
+      const enContent = fs.readFileSync(path.join(enDir, 'broken.json'), 'utf-8')
+      expect(JSON.parse(enContent)).toEqual({})
     })
   })
 
